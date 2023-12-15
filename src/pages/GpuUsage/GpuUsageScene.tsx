@@ -94,13 +94,13 @@ export function getScene() {
   });
 }
 
-export const getHelloWorldAppScene = () => {
+export const getGpuUsageAppScene = () => {
   return new SceneApp({
     pages: [
     new SceneAppPage({
       title: 'GPU Memory Usage',
       controls: [new SceneTimePicker({ isOnCanvas: true })],
-      url: prefixRoute(`${ROUTES.HelloWorld}`),
+      url: prefixRoute(`${ROUTES.GpuUsage}`),
       hideFromBreadcrumbs: true,
       getScene,
     })]

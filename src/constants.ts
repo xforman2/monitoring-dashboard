@@ -7,9 +7,15 @@ export enum ROUTES {
   WithTabs = 'page-with-tabs',
   WithDrilldown = 'page-with-drilldown',
   HelloWorld = 'hello-world',
+  GpuUsage = 'gpu-usage'
 }
 
 export const DATASOURCE_REF = {
   uid: 'gdev-testdata',
   type: 'testdata',
 };
+
+export const SQL_DATASOURCE = {
+  uid: 'server-monitoring',
+  type: 'mysql'
+}

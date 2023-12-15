@@ -1,8 +1,8 @@
 import React from 'react';
-import { getScene } from './helloWorldScene';
+import {getHelloWorldAppScene} from './helloWorldScene';
 
 export const HelloWorldPluginPage = () => {
-  const scene = getScene();
+  const scene = getHelloWorldAppScene();
 
   return <scene.Component model={scene} />;
 };

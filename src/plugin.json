@@ -49,6 +49,14 @@
       "role": "Admin",
       "addToNav": true,
       "defaultNav": false
+    },
+    {
+      "type": "page",
+      "name": "Gpu Usage",
+      "path": "/a/%PLUGIN_ID%/gpu-usage",
+      "role": "Admin",
+      "addToNav": true,
+      "defaultNav": false
     }
   ],
   "dependencies": {
