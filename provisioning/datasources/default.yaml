@@ -4,3 +4,15 @@ datasources:
   - name: gdev-testdata
     isDefault: false
     type: testdata
+  - name: server-monitoring
+    type: mysql
+    url: db.fi.muni.cz
+    user: xforman2
+    jsonData:
+      database: dbxforman2
+      maxOpenConns: 100
+      maxIdleConns: 100
+      MaxIdleConnsAuto: true
+      connMaxLifetime: 14400
+    secureJsonData:
+      password: db123
