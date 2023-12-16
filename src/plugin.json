@@ -57,6 +57,14 @@
       "role": "Admin",
       "addToNav": true,
       "defaultNav": false
+    },
+    {
+      "type": "page",
+      "name": "CPU",
+      "path": "/a/%PLUGIN_ID%/cpu",
+      "role": "Admin",
+      "addToNav": true,
+      "defaultNav": false
     }
   ],
   "dependencies": {

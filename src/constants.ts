@@ -7,7 +7,8 @@ export enum ROUTES {
   WithTabs = 'page-with-tabs',
   WithDrilldown = 'page-with-drilldown',
   HelloWorld = 'hello-world',
-  GpuUsage = 'gpu-usage'
+  GpuUsage = 'gpu-usage',
+  Cpu = "cpu"
 }
 
 export const DATASOURCE_REF = {

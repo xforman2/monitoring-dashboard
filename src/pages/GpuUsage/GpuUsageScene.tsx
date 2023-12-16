@@ -83,7 +83,7 @@ const transformedData = (text: string) => new SceneDataTransformer({
 export function getScene() {
   return new EmbeddedScene({
   $variables: new SceneVariableSet({
-  variables: [servers, users],
+    variables: [servers, users],
   }),
   body: new SceneFlexLayout({
   children: [
