@@ -8,6 +8,7 @@ import { ROUTES } from '../../constants';
 import { HelloWorldPluginPage } from '../../pages/HelloWorld';
 import { GpuUsagePluginPage } from '../../pages/GpuUsage';
 import { CpuPluginPage } from 'pages/Cpu';
+import { RamPluginPage } from '../../pages/Ram';
 
 export const Routes = () => {
   return (
@@ -18,6 +19,7 @@ export const Routes = () => {
       <Route path={prefixRoute(`${ROUTES.HelloWorld}`)} component={HelloWorldPluginPage} />
       <Route path={prefixRoute(`${ROUTES.GpuUsage}`)} component={GpuUsagePluginPage} />
       <Route path={prefixRoute(`${ROUTES.Cpu}`)} component={CpuPluginPage} />
+      <Route path={prefixRoute(`${ROUTES.Ram}`)} component={RamPluginPage} />
       <Redirect to={prefixRoute(ROUTES.Home)} />
     </Switch>
   );

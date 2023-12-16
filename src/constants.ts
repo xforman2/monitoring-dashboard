@@ -8,7 +8,8 @@ export enum ROUTES {
   WithDrilldown = 'page-with-drilldown',
   HelloWorld = 'hello-world',
   GpuUsage = 'gpu-usage',
-  Cpu = "cpu"
+  Cpu = "cpu",
+  Ram = "ram"
 }
 
 export const DATASOURCE_REF = {

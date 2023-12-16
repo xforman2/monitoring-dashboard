@@ -38,7 +38,6 @@ const servers = new QueryVariable({
   includeAll: true
 });
 
-
 const queryRunner = (text: string) => new SceneQueryRunner({
   queries: 
   [{
@@ -49,7 +48,7 @@ const queryRunner = (text: string) => new SceneQueryRunner({
     FROM GpuReceipts gr 
     JOIN Gpu g ON g.UUID = gr.GPUUUID
     JOIN User u ON u.ID = gr.UserRecordUserID
-    WHERE u.xlogin IN ($user) AND g.MachineMac IN ($server) AND g.UUID = '${text}'
+    WHERE u.xlogin IN ($user) AND g.MachineMac IN ($server) AND g.UUID = '${text}' AND $__timeFilter(UserRecordTimeCreated)
     ORDER BY time`
   }],
   
@@ -98,7 +97,7 @@ export const getGpuUsageAppScene = () => {
   return new SceneApp({
     pages: [
     new SceneAppPage({
-      title: 'GPU Memory Usage',
+      title: 'GPU Dashboard',
       controls: [new SceneTimePicker({ isOnCanvas: true })],
       url: prefixRoute(`${ROUTES.GpuUsage}`),
       hideFromBreadcrumbs: true,
