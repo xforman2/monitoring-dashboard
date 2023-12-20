@@ -13,11 +13,11 @@ import { EmbeddedScene,
 
 import { ROUTES } from '../../constants';
 import { prefixRoute } from 'utils/utils.routing';
-import { LegendDisplayMode, SortOrder, TooltipDisplayMode, VisibilityMode } from '@grafana/schema';
-import { ramQuery, transformedData, users } from './queries';
+import { LegendDisplayMode, SortOrder, TooltipDisplayMode} from '@grafana/schema';
+import { diskQuery, filesQuery, transformedData, users } from './queries';
 
-function getRamTimeseries(data: SceneDataTransformer) {
-  return PanelBuilders.timeseries()
+function getDiskTimeline(data: SceneDataTransformer) {
+  return PanelBuilders.statetimeline()
   .setOption("legend", {
       showLegend: true,
       displayMode: LegendDisplayMode.Table,
@@ -27,8 +27,7 @@ function getRamTimeseries(data: SceneDataTransformer) {
     mode: TooltipDisplayMode.Multi,
     sort: SortOrder.Descending
   })
-  .setCustomFieldConfig('showPoints', VisibilityMode.Never)
-  .setData(data).setTitle("RAM %").setUnit("%")
+  .setData(data)
                           
 }
 
@@ -46,13 +45,18 @@ export function getScene() {
           title: "alfa",
           x: 0,
           y: 0,
-          width: 12,
-          height: 8,
           children: [
             new SceneGridItem({
               width: 24,
-              height: 8,
-              body: getRamTimeseries(transformedData(ramQuery('alfa'), 'PMEM')).build()
+              height: 14,
+              body: getDiskTimeline(transformedData(diskQuery('alfa'), 'DiskSpace'))
+              .setTitle("Disk Usage").setUnit("GB").build()
+            }),
+            new SceneGridItem({
+              width: 24,
+              height: 14,
+              body: getDiskTimeline(transformedData(filesQuery('alfa'), 'Files'))
+              .setTitle("Number of Files").build()
             }),
           ]
         }),
@@ -60,13 +64,18 @@ export function getScene() {
           title: "beta",
           x: 0,
           y: 0,
-          width: 12,
-          height: 8,
           children: [
             new SceneGridItem({
               width: 24,
-              height: 8,
-              body: getRamTimeseries(transformedData(ramQuery('beta'), "PMEM")).build()
+              height: 14,
+              body: getDiskTimeline(transformedData(diskQuery('beta'), "DiskSpace"))
+              .setTitle("Disk Usage").setUnit("GB").build()
+            }),
+            new SceneGridItem({
+              width: 24,
+              height: 14,
+              body: getDiskTimeline(transformedData(filesQuery('beta'), "Files"))
+              .setTitle("Number of Files").build()
             }),
           ]
         })
@@ -76,13 +85,13 @@ export function getScene() {
   });
 }
 
-export const getRamAppScene = () => {
+export const getDiskAppScene = () => {
   return new SceneApp({
     pages: [
     new SceneAppPage({
-      title: 'RAM Dashboard',
+      title: 'Disk Dashboard',
       controls: [new SceneTimePicker({ isOnCanvas: true })],
-      url: prefixRoute(`${ROUTES.Ram}`),
+      url: prefixRoute(`${ROUTES.Disk}`),
       hideFromBreadcrumbs: false,
       getScene,
     })]

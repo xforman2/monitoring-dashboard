@@ -12,8 +12,6 @@ const getScene = () => {
     pages: [
       new SceneAppPage({
         title: 'Home page',
-        subTitle:
-          'This scene showcases a basic scene functionality, including query runner, variable and a custom scene object.',
         url: prefixRoute(ROUTES.Home),
         getScene: () => {
           return getBasicScene();

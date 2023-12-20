@@ -14,7 +14,7 @@ import { EmbeddedScene,
 import { ROUTES } from '../../constants';
 import { prefixRoute } from 'utils/utils.routing';
 import { cpuTimeQuery, highCpuTimeQuery, pcpuQuery, processCountQuery, sleepingProcessesQuery, transformedData, users } from './queries';
-import { GraphDrawStyle, LegendDisplayMode, SortOrder,StackingMode,TooltipDisplayMode } from '@grafana/schema';
+import { GraphDrawStyle, LegendDisplayMode, SortOrder,StackingMode,TooltipDisplayMode, VisibilityMode } from '@grafana/schema';
 
 function getCpuTimeseries(data: SceneDataTransformer, title: string) {
   return PanelBuilders.timeseries()
@@ -27,7 +27,9 @@ function getCpuTimeseries(data: SceneDataTransformer, title: string) {
     mode: TooltipDisplayMode.Multi,
     sort: SortOrder.Descending
   })
+  .setCustomFieldConfig('showPoints', VisibilityMode.Never)
   .setData(data).setTitle(title)
+  
                           
 }
 
@@ -142,7 +144,7 @@ export const getCpuAppScene = () => {
       title: 'CPU Dashboard',
       controls: [new SceneTimePicker({ isOnCanvas: true })],
       url: prefixRoute(`${ROUTES.Cpu}`),
-      hideFromBreadcrumbs: true,
+      hideFromBreadcrumbs: false,
       getScene,
     })]
   })

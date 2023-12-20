@@ -16,7 +16,7 @@ import { EmbeddedScene,
 
 import { ROUTES, SQL_DATASOURCE } from '../../constants';
 import { prefixRoute } from 'utils/utils.routing';
-import { LegendDisplayMode, SortOrder, TooltipDisplayMode } from '@grafana/schema';
+import { LegendDisplayMode, SortOrder, TooltipDisplayMode, VisibilityMode } from '@grafana/schema';
 
 const users = new QueryVariable({
   name: 'user',
@@ -25,16 +25,6 @@ const users = new QueryVariable({
   query: "SELECT xlogin from User",
   sort: 1,
   isMulti: true,
-  includeAll: true
-});
-
-const servers = new QueryVariable({
-  name: 'server',
-  label: 'Server',
-  datasource: SQL_DATASOURCE,
-  query: "SELECT Mac from Machine",
-  sort: 1,
-  isMulti: false,
   includeAll: true
 });
 
@@ -48,7 +38,7 @@ const queryRunner = (text: string) => new SceneQueryRunner({
     FROM GpuReceipts gr 
     JOIN Gpu g ON g.UUID = gr.GPUUUID
     JOIN User u ON u.ID = gr.UserRecordUserID
-    WHERE u.xlogin IN ($user) AND g.MachineMac IN ($server) AND g.UUID = '${text}' AND $__timeFilter(UserRecordTimeCreated)
+    WHERE u.xlogin IN ($user) AND g.UUID = '${text}' AND $__timeFilter(UserRecordTimeCreated)
     ORDER BY time`
   }],
   
@@ -82,7 +72,7 @@ const transformedData = (text: string) => new SceneDataTransformer({
 export function getScene() {
   return new EmbeddedScene({
   $variables: new SceneVariableSet({
-    variables: [servers, users],
+    variables: [users],
   }),
   body: new SceneFlexLayout({
   children: [
@@ -100,7 +90,7 @@ export const getGpuUsageAppScene = () => {
       title: 'GPU Dashboard',
       controls: [new SceneTimePicker({ isOnCanvas: true })],
       url: prefixRoute(`${ROUTES.GpuUsage}`),
-      hideFromBreadcrumbs: true,
+      hideFromBreadcrumbs: false,
       getScene,
     })]
   })
@@ -118,6 +108,7 @@ export function getGpuTimeseries() {
                           mode: TooltipDisplayMode.Multi,
                           sort: SortOrder.Descending
                         })
+                        .setCustomFieldConfig('showPoints', VisibilityMode.Never)
                         .setUnit("MB").setData(transformedData(text)).setTitle(text + ' MemoryUsage')
   }
 

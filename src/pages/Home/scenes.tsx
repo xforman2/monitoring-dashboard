@@ -1,16 +1,16 @@
 import {
   CustomVariable,
   EmbeddedScene,
-  PanelBuilders,
-  SceneControlsSpacer,
-  SceneFlexItem,
+  //PanelBuilders,
+  //SceneControlsSpacer,
+  //SceneFlexItem,
   SceneFlexLayout,
   SceneQueryRunner,
-  SceneRefreshPicker,
-  SceneTimePicker,
+  //SceneRefreshPicker,
+  //SceneTimePicker,
   SceneTimeRange,
   SceneVariableSet,
-  VariableValueSelectors,
+  //VariableValueSelectors,
 } from '@grafana/scenes';
 import { DATASOURCE_REF } from '../../constants';
 import { CustomSceneObject } from './CustomSceneObject';
@@ -77,24 +77,7 @@ export function getBasicScene(templatised = true, seriesToShow = '__server_names
     $data: queryRunner,
     body: new SceneFlexLayout({
       children: [
-        new SceneFlexItem({
-          minHeight: 300,
-          body: PanelBuilders.timeseries()
-            // Title is using variable value
-            .setTitle(templatised ? '${seriesToShow}' : seriesToShow)
-            .build(),
-        }),
       ],
     }),
-    controls: [
-      new VariableValueSelectors({}),
-      new SceneControlsSpacer(),
-      customObject,
-      new SceneTimePicker({ isOnCanvas: true }),
-      new SceneRefreshPicker({
-        intervals: ['5s', '1m', '1h'],
-        isOnCanvas: true,
-      }),
-    ],
   });
 }

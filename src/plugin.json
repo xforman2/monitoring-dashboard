@@ -28,30 +28,6 @@
     },
     {
       "type": "page",
-      "name": "Page with tabs",
-      "path": "/a/%PLUGIN_ID%/page-with-tabs",
-      "role": "Admin",
-      "addToNav": true,
-      "defaultNav": false
-    },
-    {
-      "type": "page",
-      "name": "Page with drilldown",
-      "path": "/a/%PLUGIN_ID%/page-with-drilldown",
-      "role": "Admin",
-      "addToNav": true,
-      "defaultNav": false
-    },
-    {
-      "type": "page",
-      "name": "Hello world",
-      "path": "/a/%PLUGIN_ID%/hello-world",
-      "role": "Admin",
-      "addToNav": true,
-      "defaultNav": false
-    },
-    {
-      "type": "page",
       "name": "Gpu Usage",
       "path": "/a/%PLUGIN_ID%/gpu-usage",
       "role": "Admin",
@@ -73,7 +49,25 @@
       "role": "Admin",
       "addToNav": true,
       "defaultNav": false
+    },
+    {
+      "type": "page",
+      "name": "Disk",
+      "path": "/a/%PLUGIN_ID%/disk",
+      "role": "Admin",
+      "addToNav": true,
+      "defaultNav": false
+    }, 
+    {
+      "type": "page",
+      "name": "Process Details",
+      "path": "/a/%PLUGIN_ID%/process-details",
+      "role": "Admin",
+      "addToNav": true,
+      "defaultNav": false
     }
+
+    
   ],
   "dependencies": {
     "grafanaDependency": ">=10.0.3",
