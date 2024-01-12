@@ -16,6 +16,7 @@ import { prefixRoute } from 'utils/utils.routing';
 import { LegendDisplayMode, SortOrder, TooltipDisplayMode} from '@grafana/schema';
 import { diskQuery, filesQuery, transformedData, users } from './queries';
 
+
 function getDiskTimeline(data: SceneDataTransformer) {
   return PanelBuilders.statetimeline()
   .setOption("legend", {
@@ -34,6 +35,7 @@ function getDiskTimeline(data: SceneDataTransformer) {
 
 export function getScene() {
   return new EmbeddedScene({
+    $behaviors: [],
     $variables: new SceneVariableSet({
       variables: [users]
     }),

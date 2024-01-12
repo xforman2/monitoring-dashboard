@@ -1,11 +1,11 @@
 import { QueryVariable, SceneDataTransformer, SceneQueryRunner } from "@grafana/scenes";
-import { SQL_DATASOURCE } from "../../constants";
+import { SQL_DATASOURCE_2 } from "../../constants";
 
 export const users = new QueryVariable({
     name: 'user',
     label: 'User Name',
-    datasource: SQL_DATASOURCE,
-    query: "SELECT xlogin from User",
+    datasource: SQL_DATASOURCE_2,
+    query: "SELECT login from User",
     sort: 1,
     isMulti: false,
     includeAll: false
@@ -15,14 +15,14 @@ export const users = new QueryVariable({
 export const gpuCountQuery = (text: string) => new SceneQueryRunner({
     queries: 
     [{
-        datasource: SQL_DATASOURCE,
+        datasource: SQL_DATASOURCE_2,
         refId: 'A',
         format: "time_series",
-        rawSql: `SELECT RecordTimeCreated as time, Command, pe.GpuCount
-        FROM ProcessEvidence pe
-        JOIN User u ON Id = RecordUserId
-        JOIN Machine m ON RecordMachineMac = MAC
-        WHERE m.Name = '${text}' AND xlogin = '$user' AND $__timeFilter(RecordTimeCreated) 
+        rawSql: `SELECT UserRecordTimeCreated as time, Command, pe.GpuCount
+        FROM ProcessRecord pe
+        JOIN User u ON Id = UserId
+        JOIN Machine m ON MachineId = m.ID
+        WHERE m.Name = '${text}' AND login = '$user' AND $__timeFilter(UserRecordTimeCreated) 
         ORDER BY time`
     }],
 
@@ -32,14 +32,14 @@ export const gpuCountQuery = (text: string) => new SceneQueryRunner({
 export const nicenessQuery = (text: string) => new SceneQueryRunner({
     queries: 
     [{
-        datasource: SQL_DATASOURCE,
+        datasource: SQL_DATASOURCE_2,
         refId: 'A',
         format: "time_series",
-        rawSql: `SELECT RecordTimeCreated as time, Command, pe.Niceness
-        FROM ProcessEvidence pe
-        JOIN User ON Id = RecordUserId
-        JOIN Machine m ON RecordMachineMac = MAC
-        WHERE m.Name = '${text}' AND xlogin = '$user' AND $__timeFilter(RecordTimeCreated) 
+        rawSql: `SELECT UserRecordTimeCreated as time, Command, pe.Niceness
+        FROM ProcessRecord pe
+        JOIN User ON Id = UserId
+        JOIN Machine m ON MachineId = m.ID
+        WHERE m.Name = '${text}' AND login = '$user' AND $__timeFilter(UserRecordTimeCreated) 
         ORDER BY time`
     }],
 
@@ -48,14 +48,14 @@ export const nicenessQuery = (text: string) => new SceneQueryRunner({
 export const vramQuery = (text: string) => new SceneQueryRunner({
     queries: 
     [{
-        datasource: SQL_DATASOURCE,
+        datasource: SQL_DATASOURCE_2,
         refId: 'A',
         format: "time_series",
-        rawSql: `SELECT RecordTimeCreated as time, Command, pe.OverallGPUVram
-        FROM ProcessEvidence pe
-        JOIN User ON Id = RecordUserId
-        JOIN Machine m ON RecordMachineMac = MAC
-        WHERE m.Name = '${text}' AND xlogin = '$user' AND $__timeFilter(RecordTimeCreated) 
+        rawSql: `SELECT UserRecordTimeCreated as time, Command, pe.OverallGPUVram
+        FROM ProcessRecord pe
+        JOIN User ON Id = UserId
+        JOIN Machine m ON MachineId = m.ID
+        WHERE m.Name = '${text}' AND login = '$user' AND $__timeFilter(UserRecordTimeCreated) 
         ORDER BY time`
     }],
 
@@ -64,14 +64,14 @@ export const vramQuery = (text: string) => new SceneQueryRunner({
 export const cpuTimeQuery = (text: string) => new SceneQueryRunner({
     queries: 
     [{
-        datasource: SQL_DATASOURCE,
+        datasource: SQL_DATASOURCE_2,
         refId: 'A',
         format: "time_series",
-        rawSql: `SELECT RecordTimeCreated as time, Command, TIME_TO_SEC(pe.CPUTime) as CPUTime
-        FROM ProcessEvidence pe
-        JOIN User ON Id = RecordUserId
-        JOIN Machine m ON RecordMachineMac = MAC
-        WHERE m.Name = '${text}' AND xlogin = '$user' AND $__timeFilter(RecordTimeCreated) 
+        rawSql: `SELECT UserRecordTimeCreated as time, Command, TIME_TO_SEC(pe.CPUTime) as CPUTime
+        FROM ProcessRecord pe
+        JOIN User ON Id = UserId
+        JOIN Machine m ON MachineId = m.ID
+        WHERE m.Name = '${text}' AND login = '$user' AND $__timeFilter(UserRecordTimeCreated) 
         ORDER BY time`
     }],
 

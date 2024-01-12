@@ -10,78 +10,22 @@ import { EmbeddedScene,
   SceneAppPage,
   SceneTimePicker,
   SceneDataTransformer,
-  //SceneByFrameRepeater,
-  //SceneDataNode,
+  
+  dataLayers,
+  SceneDataLayers,
+  SceneDataLayerControls,
+  SceneCanvasText,
+  behaviors,
+  
 } from '@grafana/scenes';
 
-import { ROUTES, SQL_DATASOURCE } from '../../constants';
+import { ROUTES, SQL_DATASOURCE_1, SQL_DATASOURCE_2 } from '../../constants';
 import { prefixRoute } from 'utils/utils.routing';
-import { LegendDisplayMode, SortOrder, TooltipDisplayMode, VisibilityMode } from '@grafana/schema';
+import { LegendDisplayMode, SortOrder, TooltipDisplayMode, VisibilityMode} from '@grafana/schema';
+import { AnnotationEventFieldSource } from '@grafana/data';
 
-const users = new QueryVariable({
-  name: 'user',
-  label: 'User Name',
-  datasource: SQL_DATASOURCE,
-  query: "SELECT xlogin from User",
-  sort: 1,
-  isMulti: true,
-  includeAll: true
-});
+let selectedGpus: string[] | undefined = []
 
-const queryRunner = (text: string) => new SceneQueryRunner({
-  queries: 
-  [{
-    datasource: SQL_DATASOURCE,
-    refId: 'A',
-    format: "time_series",
-    rawSql: `SELECT UserRecordTimeCreated as time, gr.MemoryUsage as MemoryUsage, u.XLogin
-    FROM GpuReceipts gr 
-    JOIN Gpu g ON g.UUID = gr.GPUUUID
-    JOIN User u ON u.ID = gr.UserRecordUserID
-    WHERE u.xlogin IN ($user) AND g.UUID = '${text}' AND $__timeFilter(UserRecordTimeCreated)
-    ORDER BY time`
-  }],
-  
-});
-
-const transformedData = (text: string) => new SceneDataTransformer({
-  $data: queryRunner(text),
-  transformations: [
-    {
-      id: 'renameByRegex',
-      options: {
-        regex: 'MemoryUsage(.*)',
-        renamePattern: '$1',
-      },
-    },
-    {
-      id: "convertFieldType",
-      options: {
-        conversions: [
-          {
-            destinationType: "number",
-            targetField: "MemoryUsage"
-          }
-        ],
-        fields: {}
-      }
-    }
-  ],
-});
-
-export function getScene() {
-  return new EmbeddedScene({
-  $variables: new SceneVariableSet({
-    variables: [users],
-  }),
-  body: new SceneFlexLayout({
-  children: [
-    getGpuTimeseries()
-  ],
-  }),
-  controls: [new VariableValueSelectors({})],
-  });
-}
 
 export const getGpuUsageAppScene = () => {
   return new SceneApp({
@@ -91,69 +35,188 @@ export const getGpuUsageAppScene = () => {
       controls: [new SceneTimePicker({ isOnCanvas: true })],
       url: prefixRoute(`${ROUTES.GpuUsage}`),
       hideFromBreadcrumbs: false,
-      getScene,
-    })]
+      getScene: getScene,
+    }),
+  ]
   })
 }
 
-export function getGpuTimeseries() {
-  const getPanel = (text: string) => { 
-    return PanelBuilders.timeseries()
-                        .setOption("legend", {
-                            showLegend: true,
-                            displayMode: LegendDisplayMode.Table,
-                            placement: "right",
-                          })
-                        .setOption("tooltip", {
-                          mode: TooltipDisplayMode.Multi,
-                          sort: SortOrder.Descending
-                        })
-                        .setCustomFieldConfig('showPoints', VisibilityMode.Never)
-                        .setUnit("MB").setData(transformedData(text)).setTitle(text + ' MemoryUsage')
-  }
+export function getScene() {
 
-  const gpu001 = getPanel("GPU001")
-  const gpu002 = getPanel("GPU002")
-  const gpu003 = getPanel("GPU003")
-  const gpu004 = getPanel("GPU004")
-  const gpu005 = getPanel("GPU005")
-  const gpu006 = getPanel("GPU006")
-  const gpu007 = getPanel("GPU007")
-  const gpu008 = getPanel("GPU008")
+  const logWhenVariableChanges = new behaviors.ActWhenVariableChanged({
+    variableName: 'gpu',
+    onChange: (variable) => {
+       selectedGpus = variable.getValue()?.toString().split(",").sort()
+       console.log(selectedGpus)
+    },
+  });
+
+  const users = new QueryVariable({
+    name: 'user',
+    label: 'User Name',
+    datasource: SQL_DATASOURCE_2,
+    query: "SELECT login from User",
+    sort: 1,
+    isMulti: true,
+    includeAll: true,
+    maxVisibleValues: 2,
   
+  });
+  
+  const gpus = new QueryVariable({
+    name: 'gpu',
+    label: 'GPU',
+    datasource: SQL_DATASOURCE_2,
+    query: "SELECT UUID from Gpu",
+    sort: 1,
+    isMulti: true,
+    includeAll: true,
+    maxVisibleValues: 2,
+  });
+
+  const variableSet = new SceneVariableSet({
+    variables: [users, gpus],
+  })
+
+  const model = new EmbeddedScene({
+    $variables: variableSet,
+    $behaviors: [logWhenVariableChanges],
+    body: new SceneFlexLayout({
+      children: [
+        getGpuTimeseries(gpus)
+      ],
+    }),
+    controls: [new VariableValueSelectors({}),
+              new SceneDataLayerControls()],
+  });
+
+  return model;
+}
+
+const getPanel = (text: string) => { 
+  const queryRunner = (text: string) => new SceneQueryRunner({
+    queries: 
+    [{
+      datasource: SQL_DATASOURCE_2,
+      refId: 'A',
+      format: "time_series",
+      rawSql: `SELECT RecordTimeCreated as time, gr.MemoryUsage as MemoryUsage, u.login
+      FROM GpuReceipt gr 
+      JOIN Gpu g ON g.ID = gr.GpuID
+      JOIN User u ON u.ID = gr.UserID
+      WHERE u.login IN ($user) AND g.UUID = '${text}' AND $__timeFilter(RecordTimeCreated)
+      ORDER BY time`,
+    
+      
+    }],
+    
+    
+  });
+  
+  const transformedData = (text: string) => new SceneDataTransformer({
+    $data: queryRunner(text),
+    transformations: [
+      {
+        id: 'renameByRegex',
+        options: {
+          regex: 'MemoryUsage(.*)',
+          renamePattern: '$1',
+        },
+      },
+      {
+        id: "convertFieldType",
+        options: {
+          conversions: [
+            {
+              destinationType: "number",
+              targetField: "MemoryUsage"
+            }
+          ],
+          fields: {}
+        }
+      }
+    ],
+  });
+  return PanelBuilders.timeseries()
+                      .setOption("legend", {
+                          showLegend: true,
+                          displayMode: LegendDisplayMode.Table,
+                          placement: "right",
+                        })
+                      .setOption("tooltip", {
+                        mode: TooltipDisplayMode.Multi,
+                        sort: SortOrder.Descending
+                      })
+                      .setCustomFieldConfig('showPoints', VisibilityMode.Never)
+                      .setUnit("MB").setData(transformedData(text)).setTitle(text + ' Memory Usage')
+}
+
+function getGpuTimeseries(gpus: QueryVariable){
+  const globalAnnotations = (gpu: string) => new dataLayers.AnnotationsDataLayer({
+    name: `Reservation`,
+    query: {
+      name: 'New annotation',
+      datasource: SQL_DATASOURCE_1,
+      enable: true,
+      iconColor: 'red',
+      target: {
+        refId: 'Anno',
+        // @ts-ignore
+        format: 'table',
+        // @ts-ignore
+        rawSql: `SELECT r.Id, UserID, StartTime, EndTime, XLogin, 'Reservation' 
+               FROM dbxforman2.Reservation r JOIN User u ON UserID = u.Id 
+               WHERE Xlogin IN ($user) AND GPUUUID = '${gpu}'`
+        
+      },
+      mappings: {
+        id: {
+          source: AnnotationEventFieldSource.Field,
+          value: "Id"
+        },
+        text: {
+          source: AnnotationEventFieldSource.Text,
+          value: "reserved this gpu"
+        },
+        time: {
+          source: AnnotationEventFieldSource.Field,
+          value: "StartTime"
+        },
+        timeEnd: {
+          source: AnnotationEventFieldSource.Field,
+          value: "EndTime"
+        },
+        title: {
+          source: AnnotationEventFieldSource.Field,
+          value: "Xlogin"
+        }
+      }
+    },
+  });
   return new SceneFlexLayout({
     direction: "column",
     minHeight: 300,
-    children: [
-      new SceneFlexItem({
-        body: gpu001.build(),
-      }),
-      new SceneFlexItem({
-        body: gpu002.build(),
-      }),
-      new SceneFlexItem({
-        body: gpu003.build(),
-      }),
-      new SceneFlexItem({
-        body: gpu004.build(),
-      }),
-      new SceneFlexItem({
-        body: gpu005.build(),
-        
-      }),
-      new SceneFlexItem({
-        body: gpu006.build(),
-        
-      }),
-      new SceneFlexItem({
-        body: gpu007.build(),
-        
-      }),
-      new SceneFlexItem({
-        body: gpu008.build(),
-        
-      })
-    ]
-  });
+    children: selectedGpus !== undefined &&  selectedGpus.length !== 0
+    ? selectedGpus.map((option) => {
 
+        return new SceneFlexItem({
+          $data: new SceneDataLayers({
+            layers: [globalAnnotations(option)]
+          }),
+          body: getPanel(option).setHeaderActions(new SceneDataLayerControls()).build(),
+        });
+      })
+    : [ 
+      new SceneFlexItem({
+        body: new SceneCanvasText({
+          align: 'center',
+          text: `Please select GPU first`,
+          fontSize: 30,
+        }),
+      }),
+    ],
+    
+  });
 }
+
+

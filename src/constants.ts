@@ -16,7 +16,12 @@ export const DATASOURCE_REF = {
   type: 'testdata',
 };
 
-export const SQL_DATASOURCE = {
+export const SQL_DATASOURCE_1 = {
   uid: 'server-monitoring',
+  type: 'mysql'
+}
+
+export const SQL_DATASOURCE_2 = {
+  uid: 'server-monitoring-alfa',
   type: 'mysql'
 }
