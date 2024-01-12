@@ -1,11 +1,11 @@
 import { QueryVariable, SceneDataTransformer, SceneQueryRunner } from "@grafana/scenes";
-import { SQL_DATASOURCE } from "../../constants";
+import { SQL_DATASOURCE_2 } from "../../constants";
 
 export const users = new QueryVariable({
     name: 'user',
     label: 'User Name',
-    datasource: SQL_DATASOURCE,
-    query: "SELECT xlogin from User",
+    datasource: SQL_DATASOURCE_2,
+    query: "SELECT login from User",
     sort: 1,
     isMulti: true,
     includeAll: true
@@ -15,14 +15,14 @@ export const users = new QueryVariable({
 export const ramQuery = (text: string) => new SceneQueryRunner({
     queries: 
     [{
-        datasource: SQL_DATASOURCE,
+        datasource: SQL_DATASOURCE_2,
         refId: 'A',
         format: "time_series",
-        rawSql: `SELECT TimeCreated as time, ur.PMEM, u.FullName
+        rawSql: `SELECT TimeCreated as time, ur.PMEM, u.login
         FROM UserRecord ur
         JOIN User u ON ur.UserID = u.ID
-        JOIN Machine m ON MachineMac = MAC
-        WHERE  m.Name = '${text}' AND u.xlogin IN ($user) AND $__timeFilter(TimeCreated) 
+        JOIN Machine m ON MachineId = m.ID
+        WHERE  m.Name = '${text}' AND u.login IN ($user) AND $__timeFilter(TimeCreated) 
         ORDER BY time`
     }],
 

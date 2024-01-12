@@ -1,21 +1,21 @@
 import { QueryVariable, SceneDataTransformer, SceneQueryRunner } from "@grafana/scenes";
-import { SQL_DATASOURCE } from "../../constants";
+import { SQL_DATASOURCE_1 } from "../../constants";
 
 export const users = new QueryVariable({
     name: 'user',
     label: 'User Name',
-    datasource: SQL_DATASOURCE,
+    datasource: SQL_DATASOURCE_1,
     query: "SELECT xlogin from User",
     sort: 1,
     isMulti: true,
     includeAll: true
 });
-  
+
   
 export const diskQuery = (text: string) => new SceneQueryRunner({
     queries: 
     [{
-        datasource: SQL_DATASOURCE,
+        datasource: SQL_DATASOURCE_1,
         refId: 'A',
         format: "time_series",
         rawSql: `SELECT TimeCreated as time, u.XLogin, ur.DiskSpace
@@ -31,7 +31,7 @@ export const diskQuery = (text: string) => new SceneQueryRunner({
 export const filesQuery = (text: string) => new SceneQueryRunner({
     queries: 
     [{
-        datasource: SQL_DATASOURCE,
+        datasource: SQL_DATASOURCE_1,
         refId: 'A',
         format: "time_series",
         rawSql: `SELECT TimeCreated as time, u.XLogin, ur.Files

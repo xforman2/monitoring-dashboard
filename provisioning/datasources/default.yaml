@@ -4,6 +4,19 @@ datasources:
   - name: gdev-testdata
     isDefault: false
     type: testdata
+  - name: server-monitoring-alfa
+    type: mysql
+    url: db.fi.muni.cz
+    user: xgall
+    jsonData:
+      database: dbxgall
+      maxOpenConns: 100
+      maxIdleConns: 100
+      MaxIdleConnsAuto: true
+      connMaxLifetime: 14400
+      timezone: +00:00
+    secureJsonData:
+      password: {password}
   - name: server-monitoring
     type: mysql
     url: db.fi.muni.cz
@@ -14,5 +27,6 @@ datasources:
       maxIdleConns: 100
       MaxIdleConnsAuto: true
       connMaxLifetime: 14400
+      timezone: +00:00
     secureJsonData:
-      password: db123
+      password: {password}

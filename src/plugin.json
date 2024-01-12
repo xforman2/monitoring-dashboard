@@ -21,48 +21,48 @@
     {
       "type": "page",
       "name": "Home",
-      "path": "/a/%PLUGIN_ID%/home",
-      "role": "Admin",
+      "path": "/a/muni-servermonitoring-app/home",
+      "role": "Viewer",
       "addToNav": true,
       "defaultNav": true
     },
     {
       "type": "page",
       "name": "Gpu Usage",
-      "path": "/a/%PLUGIN_ID%/gpu-usage",
-      "role": "Admin",
+      "path": "/a/muni-servermonitoring-app/gpu-usage",
+      "role": "Viewer",
       "addToNav": true,
       "defaultNav": false
     },
     {
       "type": "page",
       "name": "CPU",
-      "path": "/a/%PLUGIN_ID%/cpu",
-      "role": "Admin",
+      "path": "/a/muni-servermonitoring-app/cpu",
+      "role": "Viewer",
       "addToNav": true,
       "defaultNav": false
     },
     {
       "type": "page",
       "name": "RAM",
-      "path": "/a/%PLUGIN_ID%/ram",
-      "role": "Admin",
+      "path": "/a/muni-servermonitoring-app/ram",
+      "role": "Viewer",
       "addToNav": true,
       "defaultNav": false
     },
     {
       "type": "page",
       "name": "Disk",
-      "path": "/a/%PLUGIN_ID%/disk",
-      "role": "Admin",
+      "path": "/a/muni-servermonitoring-app/disk",
+      "role": "Viewer",
       "addToNav": true,
       "defaultNav": false
     }, 
     {
       "type": "page",
       "name": "Process Details",
-      "path": "/a/%PLUGIN_ID%/process-details",
-      "role": "Admin",
+      "path": "/a/muni-servermonitoring-app/process-details",
+      "role": "Viewer",
       "addToNav": true,
       "defaultNav": false
     }
