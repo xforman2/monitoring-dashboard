@@ -5,16 +5,232 @@ import { EmbeddedScene,
   SceneDataTransformer,
   SceneGridLayout,
   SceneGridItem,
-  SceneGridRow,
   SceneVariableSet,
   VariableValueSelectors,
   PanelBuilders,
+  QueryVariable,
+  SceneReactObject,
+  VariableValueSingle,
+  SceneQueryRunner,
 } from '@grafana/scenes';
 
-import { ROUTES } from '../../constants';
+import { ROUTES, SQL_DATASOURCE_2 } from '../../constants';
 import { prefixRoute } from 'utils/utils.routing';
-import { LegendDisplayMode, SortOrder, TooltipDisplayMode, VisibilityMode } from '@grafana/schema';
-import { cpuTimeQuery, gpuCountQuery, nicenessQuery, transformedData, users, vramQuery } from './queries';
+import { LegendDisplayMode, SortOrder, TooltipDisplayMode, VariableHide, VisibilityMode } from '@grafana/schema';
+import React from 'react';
+
+export const getProcessAppScene = () => {
+  const servers = new QueryVariable({
+    name: 'server',
+    label: 'Server',
+    datasource: SQL_DATASOURCE_2,
+    query: "SELECT Id __value, Name __text from Machine",
+    sort: 1,
+    isMulti: true,
+    includeAll: true,
+    maxVisibleValues: 2,
+    defaultToAll: true,
+    hide: VariableHide.hideVariable
+  
+  });
+
+  const page = new SceneAppPage({
+    $variables: new SceneVariableSet({
+      variables: [servers]
+    }),
+    title: 'Process Details Dashboard',
+    controls: [new SceneTimePicker({ isOnCanvas: true })],
+    url: prefixRoute(`${ROUTES.ProcessDetails}`),
+    hideFromBreadcrumbs: false,
+    tabs: [],
+    getFallbackPage: () =>
+      new SceneAppPage({
+        title: 'Loading...',
+        url: '',
+        getScene: () =>
+          new EmbeddedScene({
+            body: new SceneReactObject({
+              component: () => <p>Please wait...</p>,
+            }),
+          }),
+      }),
+  })
+  servers.subscribeToState((state) => {
+    if (state.loading === false){
+      page.setState({
+        tabs: state.options.map((option) => {
+          return getTab(option.label, option.value)
+        })
+      })
+    }
+    
+  })
+  return new SceneApp({
+    pages: [page]
+  })
+}
+export function getTab(server: string, serverId: VariableValueSingle){
+  return new SceneAppPage({
+    title: `${server}`,
+    url: prefixRoute(`${ROUTES.ProcessDetails}/${server}`),
+    getScene: () => getScene(serverId)
+  })
+}
+
+export function getScene(serverId: VariableValueSingle) {
+  const users = new QueryVariable({
+    name: 'user',
+    label: 'User Name',
+    datasource: SQL_DATASOURCE_2,
+    query: "SELECT login from User",
+    sort: 1,
+    isMulti: false,
+    includeAll: false
+});
+  
+  
+const gpuCountQuery = (text: VariableValueSingle) => new SceneQueryRunner({
+    queries: 
+    [{
+        datasource: SQL_DATASOURCE_2,
+        refId: 'A',
+        format: "time_series",
+        rawSql: `SELECT UserRecordTimeCreated as time, Command, pe.GpuCount
+        FROM ProcessRecord pe
+        JOIN User u ON Id = UserId
+        WHERE MachineId = '${text}' AND login = '$user' AND $__timeFilter(UserRecordTimeCreated) 
+        ORDER BY time`
+    }],
+
+});
+
+  
+const nicenessQuery = (text: VariableValueSingle) => new SceneQueryRunner({
+    queries: 
+    [{
+        datasource: SQL_DATASOURCE_2,
+        refId: 'A',
+        format: "time_series",
+        rawSql: `SELECT UserRecordTimeCreated as time, Command, pe.Niceness
+        FROM ProcessRecord pe
+        JOIN User ON Id = UserId
+        WHERE MachineId = '${text}' AND login = '$user' AND $__timeFilter(UserRecordTimeCreated) 
+        ORDER BY time`
+    }],
+
+});
+  
+const vramQuery = (text: VariableValueSingle) => new SceneQueryRunner({
+    queries: 
+    [{
+        datasource: SQL_DATASOURCE_2,
+        refId: 'A',
+        format: "time_series",
+        rawSql: `SELECT UserRecordTimeCreated as time, Command, pe.OverallGPUVram
+        FROM ProcessRecord pe
+        JOIN User ON Id = UserId
+        JOIN Machine m ON MachineId = m.ID
+        WHERE MachineId = '${text}' AND login = '$user' AND $__timeFilter(UserRecordTimeCreated) 
+        ORDER BY time`
+    }],
+
+});
+
+const cpuTimeQuery = (text: VariableValueSingle) => new SceneQueryRunner({
+    queries: 
+    [{
+        datasource: SQL_DATASOURCE_2,
+        refId: 'A',
+        format: "time_series",
+        rawSql: `SELECT UserRecordTimeCreated as time, Command, TIME_TO_SEC(pe.CPUTime) as CPUTime
+        FROM ProcessRecord pe
+        JOIN User ON Id = UserId
+        JOIN Machine m ON MachineId = m.ID
+        WHERE MachineId = '${text}' AND login = '$user' AND $__timeFilter(UserRecordTimeCreated) 
+        ORDER BY time`
+    }],
+
+});
+  
+
+
+const transformedData = (query: SceneQueryRunner, field: string) => new SceneDataTransformer({
+    $data: query,
+    transformations: [
+        {
+        id: 'renameByRegex',
+        options: {
+            regex: `${field} (.*)`,
+            renamePattern: '$1',
+        },
+        },
+        {
+        id: "convertFieldType",
+        options: {
+            conversions: [
+            {
+                destinationType: "number",
+                targetField: `${field}`
+            }
+            ],
+            fields: {}
+        }
+        }
+    ],
+});
+
+  return new EmbeddedScene({
+    $variables: new SceneVariableSet({
+      variables: [users]
+    }),
+    body: new SceneGridLayout({
+      isDraggable: true,
+      isLazy: true,
+      children: [
+        new SceneGridItem({
+          x: 0,
+          y: 0,
+          width: 12,
+          height: 8,
+          body: getProcessTimeseries(transformedData(vramQuery(serverId), 'OverallGPUVram'))
+            .setTitle("Overall GPU VRAM Used by Process")
+            .setUnit("MB")
+            .build(),
+        }),
+        new SceneGridItem({
+          x: 12,
+          y: 0,
+          width: 12,
+          height: 8,
+          body: getProcessTimeseries(transformedData(nicenessQuery(serverId), 'Niceness'))
+            .setTitle("Niceness of Process")
+            .build(),
+        }),
+        new SceneGridItem({
+          x: 0,
+          y: 8,
+          width: 12,
+          height: 8,
+          body: getProcessTimeseries(transformedData(gpuCountQuery(serverId), 'GpuCount'))
+            .setTitle("Number of GPUs occupied by process")
+            .build(),
+        }),
+        new SceneGridItem({
+          x: 12,
+          y: 8,
+          width: 12,
+          height: 8,
+          body: getProcessTimeseries(transformedData(cpuTimeQuery(serverId), 'CPUTime'))
+            .setTitle("CPU Time of process").setUnit("s")
+            .build(),
+        }),
+        
+        
+      ]
+    }),  
+    controls: [new VariableValueSelectors({})],
+  });
+}
 
 function getProcessTimeseries(data: SceneDataTransformer) {
   return PanelBuilders.timeseries()
@@ -30,84 +246,4 @@ function getProcessTimeseries(data: SceneDataTransformer) {
   .setCustomFieldConfig('showPoints', VisibilityMode.Never)
   .setData(data)
                           
-}
-
-function getGridRow(title: string, difference: number){
-
-  return new SceneGridRow({
-    title: title,
-    x: 0,
-    y: 0 + difference,
-    children: [
-      new SceneGridItem({
-        x: 0,
-        y: 0 + difference,
-        width: 12,
-        height: 8,
-        body: getProcessTimeseries(transformedData(vramQuery(title), 'OverallGPUVram'))
-          .setTitle("Overall GPU VRAM Used by Process")
-          .setUnit("MB")
-          .build(),
-      }),
-      new SceneGridItem({
-        x: 12,
-        y: 0 + difference,
-        width: 12,
-        height: 8,
-        body: getProcessTimeseries(transformedData(nicenessQuery(title), 'Niceness'))
-          .setTitle("Niceness of Process")
-          .build(),
-      }),
-      new SceneGridItem({
-        x: 0,
-        y: 8 + difference,
-        width: 12,
-        height: 8,
-        body: getProcessTimeseries(transformedData(gpuCountQuery(title), 'GpuCount'))
-          .setTitle("Number of GPUs occupied by process")
-          .build(),
-      }),
-      new SceneGridItem({
-        x: 12,
-        y: 8 + difference,
-        width: 12,
-        height: 8,
-        body: getProcessTimeseries(transformedData(cpuTimeQuery(title), 'CPUTime'))
-          .setTitle("CPU Time of process").setUnit("s")
-          .build(),
-      }),
-    ],
-  })
-}
-
-export function getScene() {
-  return new EmbeddedScene({
-    $variables: new SceneVariableSet({
-      variables: [users]
-    }),
-    body: new SceneGridLayout({
-      isDraggable: true,
-      isLazy: true,
-      children: [
-        getGridRow("alfa", 0),
-        getGridRow("beta", 16)
-        
-        
-      ]
-    }),  
-    controls: [new VariableValueSelectors({})],
-  });
-}
-
-export const getProcessAppScene = () => {
-  return new SceneApp({
-    pages: [
-    new SceneAppPage({
-      title: 'Process Details Dashboard',
-      controls: [new SceneTimePicker({ isOnCanvas: true })],
-      url: prefixRoute(`${ROUTES.ProcessDetails}`),
-      hideFromBreadcrumbs: false,
-      getScene,
-    })]
-  })
 }
