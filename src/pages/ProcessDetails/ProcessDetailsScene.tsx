@@ -9,7 +9,6 @@ import { EmbeddedScene,
   VariableValueSelectors,
   PanelBuilders,
   QueryVariable,
-  SceneReactObject,
   VariableValueSingle,
   SceneQueryRunner,
 } from '@grafana/scenes';
@@ -17,7 +16,6 @@ import { EmbeddedScene,
 import { ROUTES, SQL_DATASOURCE_2 } from '../../constants';
 import { prefixRoute } from 'utils/utils.routing';
 import { LegendDisplayMode, SortOrder, TooltipDisplayMode, VariableHide, VisibilityMode } from '@grafana/schema';
-import React from 'react';
 
 export const getProcessAppScene = () => {
   const servers = new QueryVariable({
@@ -43,28 +41,23 @@ export const getProcessAppScene = () => {
     url: prefixRoute(`${ROUTES.ProcessDetails}`),
     hideFromBreadcrumbs: false,
     tabs: [],
-    getFallbackPage: () =>
-      new SceneAppPage({
-        title: 'Loading...',
-        url: '',
-        getScene: () =>
-          new EmbeddedScene({
-            body: new SceneReactObject({
-              component: () => <p>Please wait...</p>,
-            }),
-          }),
-      }),
   })
-  servers.subscribeToState((state) => {
-    if (state.loading === false){
-      page.setState({
-        tabs: state.options.map((option) => {
-          return getTab(option.label, option.value)
+  
+  page.addActivationHandler(() => {
+    const sub = servers.subscribeToState((state) => {
+      if (state.loading === false && state.options){
+        
+        page.setState({
+          
+          tabs: state.options.map((option) => {
+            return getTab(option.label, option.value) 
+          })
         })
-      })
-    }
-    
-  })
+      }
+      
+    })
+    return () => sub.unsubscribe();
+  });
   return new SceneApp({
     pages: [page]
   })
