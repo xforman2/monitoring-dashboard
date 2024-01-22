@@ -55,16 +55,23 @@ export const getCpuAppScene = () => {
           }),
       }),
   })
-  servers.subscribeToState((state) => {
-    if (state.loading === false){
-      page.setState({
-        tabs: state.options.map((option) => {
-          return getTab(option.label, option.value)
+  
+  page.addActivationHandler(() => {
+    const sub = servers.subscribeToState((state) => {
+      if (state.loading === false && state.options){
+        
+        page.setState({
+          
+          tabs: state.options.map((option) => {
+            return getTab(option.label, option.value) 
+          })
         })
-      })
-    }
-    
-  })
+      }
+      
+    })
+    return () => sub.unsubscribe();
+  });
+
   return new SceneApp({
     pages: [page]
   })
@@ -77,15 +84,17 @@ export function getTab(server: string, serverId: VariableValueSingle){
   })
 }
 export function getScene(serverId: VariableValueSingle) {
+  console.log("new scene")
   const users = new QueryVariable({
-    name: 'user',
+    name: 'userCpu',
     label: 'User Name',
     datasource: SQL_DATASOURCE_2,
     query: "SELECT login from User",
     sort: 1,
     isMulti: true,
     includeAll: true,
-    defaultToAll: true
+    defaultToAll: true,
+    maxVisibleValues: 2
 });
   
   
@@ -98,7 +107,7 @@ const pcpuQuery = (text: VariableValueSingle) => new SceneQueryRunner({
         rawSql: `SELECT TimeCreated as time, ur.PCPU, u.login
         FROM UserRecord ur
         JOIN User u ON ur.UserID = u.ID
-        WHERE  MachineId = '${text}' AND u.login IN ($user) AND $__timeFilter(TimeCreated) 
+        WHERE  MachineId = '${text}' AND u.login IN ($userCpu) AND $__timeFilter(TimeCreated) 
         ORDER BY time`
     }],
 
@@ -113,7 +122,7 @@ const cpuTimeQuery = (text: VariableValueSingle) => new SceneQueryRunner({
         rawSql: `SELECT TimeCreated as time, TIME_TO_SEC(ur.CPUTime) as CPUTime, u.login
         FROM UserRecord ur
         JOIN User u ON ur.UserID = u.ID
-        WHERE  MachineId = '${text}' AND u.login IN ($user) AND $__timeFilter(TimeCreated) 
+        WHERE  MachineId = '${text}' AND u.login IN ($userCpu) AND $__timeFilter(TimeCreated) 
         ORDER BY time`
     }],
 
@@ -128,7 +137,7 @@ const highCpuTimeQuery = (text: VariableValueSingle) => new SceneQueryRunner({
         rawSql: `SELECT TimeCreated as time, ur.HighCpuTime, u.login
         FROM UserRecord ur
         JOIN User u ON ur.UserID = u.ID
-        WHERE  MachineId = '${text}' AND u.login IN ($user) AND $__timeFilter(TimeCreated) 
+        WHERE  MachineId = '${text}' AND u.login IN ($userCpu) AND $__timeFilter(TimeCreated) 
         ORDER BY time`
     }],
 
@@ -143,7 +152,7 @@ const processCountQuery = (text: VariableValueSingle) => new SceneQueryRunner({
         rawSql: `SELECT TimeCreated as time, ur.ProcessCount, u.login
         FROM UserRecord ur
         JOIN User u ON ur.UserID = u.ID
-        WHERE  MachineId = '${text}' AND u.login IN ($user) AND $__timeFilter(TimeCreated) 
+        WHERE  MachineId = '${text}' AND u.login IN ($userCpu) AND $__timeFilter(TimeCreated) 
         ORDER BY time`
     }],
 
@@ -158,7 +167,7 @@ const sleepingProcessesQuery = (text: VariableValueSingle) => new SceneQueryRunn
         rawSql: `SELECT TimeCreated as time, ur.IOSleeping, u.login
         FROM UserRecord ur
         JOIN User u ON ur.UserID = u.ID
-        WHERE  MachineId = '${text}' AND u.login IN ($user) AND $__timeFilter(TimeCreated) 
+        WHERE  MachineId = '${text}' AND u.login IN ($userCpu) AND $__timeFilter(TimeCreated) 
         ORDER BY time`
     }],
 

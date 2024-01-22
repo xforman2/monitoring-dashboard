@@ -3,7 +3,7 @@ import {getGpuUsageAppScene} from './GpuUsageScene';
 import { useSceneApp } from '@grafana/scenes';
 
 export const GpuUsagePluginPage = () => {
-  const scene = getGpuUsageAppScene();
+  const scene = useSceneApp(getGpuUsageAppScene);
 
   return <scene.Component model={scene} />;
 };

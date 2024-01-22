@@ -13,19 +13,21 @@ import { EmbeddedScene,
   SceneDataLayerControls,
   sceneGraph,
   VariableValueSingle,
-  SceneReactObject
+  SceneRefreshPicker,
+  SceneVariableValueChangedEvent,
   
 } from '@grafana/scenes';
 
 import { ROUTES, SQL_DATASOURCE_2 } from '../../constants';
 import { prefixRoute } from 'utils/utils.routing';
 import { LegendDisplayMode, SortOrder, TooltipDisplayMode, VariableHide, VisibilityMode} from '@grafana/schema';
-import { AnnotationEventFieldSource } from '@grafana/data';
-import React from 'react';
 import { SceneRadioToggle } from 'utils/SceneRadioToggle';
 import { ShowBasedOnConditionBehavior } from 'utils/ShowBasedOnConditionBehavior';
 
+
+
 export const getGpuUsageAppScene = () => {
+
   const servers = new QueryVariable({
     name: 'server',
     label: 'Server',
@@ -45,45 +47,29 @@ export const getGpuUsageAppScene = () => {
       variables: [servers]
     }),
     title: 'GPU Dashboard',
-    controls: [new SceneTimePicker({ isOnCanvas: true })],
+    controls: [new SceneTimePicker({ isOnCanvas: true }),
+               new SceneRefreshPicker({})],
     url: prefixRoute(`${ROUTES.GpuUsage}`),
     hideFromBreadcrumbs: false,
     tabs: [],
-    getFallbackPage: () =>
-      new SceneAppPage({
-        title: 'Loading...',
-        url: '',
-        getScene: () =>
-          new EmbeddedScene({
-            body: new SceneReactObject({
-              component: () => <p>Please wait...</p>,
-            }),
-          }),
-      }),
   })
-  servers.subscribeToState((state) => {
-    if (state.loading === false && state.options){
-      page.setState({
-        tabs: state.options.map((option) => {
-          return getTab(option.label, option.value) 
-        })
-      })
-    }
-    
-  })
-
+  
   page.addActivationHandler(() => {
-    if (page.state.tabs!.length === 0) {
-      const cancel = setTimeout(() => {
+    const sub = servers.subscribeToState((state) => {
+      if (state.loading === false && state.options){
+        
         page.setState({
-          getFallbackPage: undefined,
-        });
-      }, 2000);
-      return () => clearTimeout(cancel);
-    }
-
-    return;
+          
+          tabs: state.options.map((option) => {
+            return getTab(option.label, option.value) 
+          })
+        })
+      }
+      
+    })
+    return () => sub.unsubscribe();
   });
+
 
   return new SceneApp({
     pages: [page]
@@ -91,6 +77,7 @@ export const getGpuUsageAppScene = () => {
 }
 
 export function getTab(server: string, serverId: VariableValueSingle){
+  console.log("tab" + serverId)
   return new SceneAppPage({
     title: `${server}`,
     url: prefixRoute(`${ROUTES.GpuUsage}/${server}`),
@@ -99,9 +86,21 @@ export function getTab(server: string, serverId: VariableValueSingle){
 }
 
 export function getScene(serverId: VariableValueSingle) {
+  console.log("scene" + serverId)
+  const gpus = new QueryVariable({
+    name: 'gpu' + serverId,
+    label: 'GPU',
+    datasource: SQL_DATASOURCE_2,
+    query: `SELECT UUID from Gpu WHERE MachineID = ${serverId}`,
+    sort: 1,
+    isMulti: true,
+    includeAll: true,
+    maxVisibleValues: 2,
+    defaultToAll: true
+  });
 
   const users = new QueryVariable({
-    name: 'user',
+    name: 'userGpu',
     label: 'User Name',
     datasource: SQL_DATASOURCE_2,
     query: "SELECT login from User",
@@ -110,31 +109,23 @@ export function getScene(serverId: VariableValueSingle) {
     includeAll: true,
     maxVisibleValues: 2,
     defaultToAll: true
-  
-  });
-  const gpus = new QueryVariable({
-    name: 'gpu',
-    label: 'GPU',
-    datasource: SQL_DATASOURCE_2,
-    query: `SELECT UUID from Gpu WHERE MachineID = ${serverId} `,
-    sort: 1,
-    isMulti: true,
-    includeAll: true,
-    maxVisibleValues: 2,
-    defaultToAll: true
+
   });
 
   const variableSet = new SceneVariableSet({
     variables: [users, gpus],
   })
+
+  
   const scene = new EmbeddedScene({
     $behaviors: [],
     $variables: variableSet,
     body: new SceneFlexLayout({
       children: []
     }),
-    controls: [new VariableValueSelectors({}),
-               new SceneDataLayerControls(),
+    controls: [
+              new VariableValueSelectors({}),
+              new SceneDataLayerControls(),
               new SceneRadioToggle({
                 key: "toggle",
                 options: [
@@ -142,79 +133,80 @@ export function getScene(serverId: VariableValueSingle) {
                   { value: 'hidden', label: 'Hide no data panels' },
                 ],
                 value: 'visible',
-              })],
+              }),
+              ],
+              
   })
-  gpus.subscribeToState((state) => {
-    const queryRunner = (serverId: VariableValueSingle, gpu: string) => new SceneQueryRunner({
-      queries: 
-      [{
-        datasource: SQL_DATASOURCE_2,
-        
-        refId: 'A',
-        format: "time_series",
-        rawSql: `SELECT RecordTimeCreated as time, gr.MemoryUsage as MemoryUsage, u.login
-        FROM GpuReceipt gr 
-        JOIN Gpu g ON g.ID = gr.GpuID
-        JOIN User u ON u.ID = gr.UserID 
-        WHERE MachineId = '${serverId}' AND u.login IN ($user) AND g.UUID = '${gpu}' AND $__timeFilter(RecordTimeCreated)
-        ORDER BY time`,
-      }]
-    })
   
-    const transformedData = (queryRunner: SceneQueryRunner) => new SceneDataTransformer({
-      $data: queryRunner,
-      transformations: [
-        {
-          id: 'renameByRegex',
-          options: {
-            regex: 'MemoryUsage(.*)',
-            renamePattern: '$1',
-          },
-        },
-        {
-          id: "convertFieldType",
-          options: {
-            conversions: [
-              {
-                destinationType: "number",
-                targetField: "MemoryUsage"
-              }
-            ],
-            fields: {}
-          }
-        },
-      ],
-    });
-    let selectedOptions: string[] = []
-    const gpuVariable = sceneGraph.getVariables(scene).getByName("gpu")  
-    if (gpuVariable){
-      // @ts-ignore
-       selectedOptions = gpuVariable.getValueText().toString().split(" + ").sort()
-    }
+  scene.addActivationHandler(() => {
+    const sub = variableSet.subscribeToEvent(SceneVariableValueChangedEvent, () => {
+      const queryRunner = (serverId: VariableValueSingle, gpu: string) => new SceneQueryRunner({
+        queries: 
+        [{
+          datasource: SQL_DATASOURCE_2,
+          
+          refId: 'A',
+          format: "time_series",
+          rawSql: `SELECT RecordTimeCreated as time, gr.MemoryUsage as MemoryUsage, u.login
+          FROM GpuReceipt gr 
+          JOIN Gpu g ON g.ID = gr.GpuID
+          JOIN User u ON u.ID = gr.UserID 
+          WHERE MachineId = '${serverId}' AND u.login IN ($userGpu) AND g.UUID = '${gpu}' AND $__timeFilter(RecordTimeCreated)
+          ORDER BY time`,
+        }]
+      })
     
-    if (selectedOptions[0] === "All") {
-      selectedOptions = state.options.map((option) => option.label)
+      const transformedData = (queryRunner: SceneQueryRunner) => new SceneDataTransformer({
+        $data: queryRunner, 
+        transformations: [
+          {
+            id: 'renameByRegex',
+            options: {
+              regex: 'MemoryUsage(.*)',
+              renamePattern: '$1',
+            },
+          },
+          {
+            id: "convertFieldType",
+            options: {
+              conversions: [
+                {
+                  destinationType: "number",
+                  targetField: "MemoryUsage"
+                }
+              ],
+              fields: {}
+            }
+          },
+        ],
+      });
 
-    }
-    scene.setState({
-      body: new SceneFlexLayout({
-        direction: "column",
-        children: selectedOptions.map((option) => {
-          return new SceneFlexItem({
-            $data: transformedData(queryRunner(serverId, option)),
-            $behaviors: [new ShowBasedOnConditionBehavior({
-              references: ["toggle"],
-              condition: (toggle: SceneRadioToggle) => {
-                 return toggle.state.value === "visible" 
-              }
-            })],
-            minHeight: 250,
-            
-            body: getPanel(option).setHeaderActions(new SceneDataLayerControls()).build(),
-          });
+      let selectedOptions: any = []
+      selectedOptions = sceneGraph.getVariables(scene).getByName("gpu" + serverId)?.getValue()
+      
+      scene.setState({
+        
+        body: new SceneFlexLayout({
+          direction: "column",
+          children: selectedOptions.map((option: string) => {
+            return new SceneFlexItem({
+              $data: transformedData(queryRunner(serverId, option)),
+              $behaviors: [new ShowBasedOnConditionBehavior({
+                references: ["toggle"],
+                condition: (toggle: SceneRadioToggle) => {
+                  return toggle.state.value === "visible" 
+                }
+              })],
+              minHeight: 250,
+              
+              body: getPanel(option).setHeaderActions(new SceneDataLayerControls()).build(),
+              });
+            })
+          })
         })
       })
-    })
+    return () => sub.unsubscribe();
+    
   })
   return scene;
 }

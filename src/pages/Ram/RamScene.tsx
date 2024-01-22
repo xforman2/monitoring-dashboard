@@ -8,7 +8,6 @@ import { EmbeddedScene,
   SceneVariableSet,
   VariableValueSelectors,
   PanelBuilders,
-  SceneReactObject,
   QueryVariable,
   VariableValueSingle,
   SceneQueryRunner,
@@ -17,7 +16,6 @@ import { EmbeddedScene,
 import { ROUTES, SQL_DATASOURCE_2 } from '../../constants';
 import { prefixRoute } from 'utils/utils.routing';
 import { LegendDisplayMode, SortOrder, TooltipDisplayMode, VariableHide, VisibilityMode } from '@grafana/schema';
-import React from 'react';
 
 export const getRamAppScene = () => {
   const servers = new QueryVariable({
@@ -38,33 +36,29 @@ export const getRamAppScene = () => {
     $variables: new SceneVariableSet({
       variables: [servers]
     }),
-    title: 'CPU Dashboard',
+    title: 'RAM Dashboard',
     controls: [new SceneTimePicker({ isOnCanvas: true })],
     url: prefixRoute(`${ROUTES.Ram}`),
     hideFromBreadcrumbs: false,
     tabs: [],
-    getFallbackPage: () =>
-      new SceneAppPage({
-        title: 'Loading...',
-        url: '',
-        getScene: () =>
-          new EmbeddedScene({
-            body: new SceneReactObject({
-              component: () => <p>Please wait...</p>,
-            }),
-          }),
-      }),
   })
-  servers.subscribeToState((state) => {
-    if (state.loading === false){
-      page.setState({
-        tabs: state.options.map((option) => {
-          return getTab(option.label, option.value)
+  
+  page.addActivationHandler(() => {
+    const sub = servers.subscribeToState((state) => {
+      if (state.loading === false && state.options){
+        
+        page.setState({
+          
+          tabs: state.options.map((option) => {
+            return getTab(option.label, option.value) 
+          })
         })
-      })
-    }
-    
-  })
+      }
+      
+    })
+    return () => sub.unsubscribe();
+  });
+
   return new SceneApp({
     pages: [page]
   })
