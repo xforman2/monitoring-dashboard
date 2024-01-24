@@ -2,7 +2,7 @@ version: '3.0'
 
 services:
   grafana:
-    container_name: 'muni-servermonitoring-scenesapp'
+    container_name: 'xforman2-servermonitoring-scenesapp'
     platform: 'linux/amd64'
     build:
       context: ./.config
@@ -12,5 +12,5 @@ services:
     ports:
       - 3000:3000/tcp
     volumes:
-      - ./dist:/var/lib/grafana/plugins/muni-servermonitoring-scenesapp
+      - ./dist:/var/lib/grafana/plugins/xforman2-servermonitoring-scenesapp
       - ./provisioning:/etc/grafana/provisioning

@@ -4,7 +4,7 @@ export const PLUGIN_BASE_URL = `/a/${pluginJson.id}`;
 
 export enum ROUTES {
   Home = 'home',
-  GpuUsage = 'gpu-usage',
+  Gpu = 'gpu',
   Cpu = "cpu",
   Ram = "ram",
   Disk = "disk",

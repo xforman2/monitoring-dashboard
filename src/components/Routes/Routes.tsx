@@ -13,7 +13,7 @@ export const Routes = () => {
   return (
     <Switch>
       <Route path={prefixRoute(`${ROUTES.Home}`)} component={HomePage} />
-      <Route path={prefixRoute(`${ROUTES.GpuUsage}`)} component={GpuUsagePluginPage} />
+      <Route path={prefixRoute(`${ROUTES.Gpu}`)} component={GpuUsagePluginPage} />
       <Route path={prefixRoute(`${ROUTES.Cpu}`)} component={CpuPluginPage} />
       <Route path={prefixRoute(`${ROUTES.Ram}`)} component={RamPluginPage} />
       <Route path={prefixRoute(`${ROUTES.Disk}`)} component={DiskPluginPage} />
