@@ -2,12 +2,12 @@
   "$schema": "https://raw.githubusercontent.com/grafana/grafana/main/docs/sources/developers/plugins/plugin.schema.json",
   "type": "app",
   "name": "Server Monitoring",
-  "id": "muni-servermonitoring-app",
+  "id": "xforman2-servermonitoring-app",
   "info": {
     "keywords": ["app"],
     "description": "",
     "author": {
-      "name": "Muni"
+      "name": "xforman2"
     },
     "logos": {
       "small": "img/logo.svg",
@@ -21,15 +21,15 @@
     {
       "type": "page",
       "name": "Home",
-      "path": "/a/muni-servermonitoring-app/home",
+      "path": "/a/xforman2-servermonitoring-app/home",
       "role": "Viewer",
       "addToNav": true,
       "defaultNav": true
     },
     {
       "type": "page",
-      "name": "Gpu Usage",
-      "path": "/a/muni-servermonitoring-app/gpu-usage",
+      "name": "GPU",
+      "path": "/a/xforman2-servermonitoring-app/gpu",
       "role": "Viewer",
       "addToNav": true,
       "defaultNav": false
@@ -37,7 +37,7 @@
     {
       "type": "page",
       "name": "CPU",
-      "path": "/a/muni-servermonitoring-app/cpu",
+      "path": "/a/xforman2-servermonitoring-app/cpu",
       "role": "Viewer",
       "addToNav": true,
       "defaultNav": false
@@ -45,7 +45,7 @@
     {
       "type": "page",
       "name": "RAM",
-      "path": "/a/muni-servermonitoring-app/ram",
+      "path": "/a/xforman2-servermonitoring-app/ram",
       "role": "Viewer",
       "addToNav": true,
       "defaultNav": false
@@ -53,7 +53,7 @@
     {
       "type": "page",
       "name": "Disk",
-      "path": "/a/muni-servermonitoring-app/disk",
+      "path": "/a/xforman2-servermonitoring-app/disk",
       "role": "Viewer",
       "addToNav": true,
       "defaultNav": false
@@ -61,7 +61,7 @@
     {
       "type": "page",
       "name": "Process Details",
-      "path": "/a/muni-servermonitoring-app/process-details",
+      "path": "/a/xforman2-servermonitoring-app/process-details",
       "role": "Viewer",
       "addToNav": true,
       "defaultNav": false

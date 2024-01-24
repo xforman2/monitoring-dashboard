@@ -49,7 +49,7 @@ export const getGpuUsageAppScene = () => {
     title: 'GPU Dashboard',
     controls: [new SceneTimePicker({ isOnCanvas: true }),
                new SceneRefreshPicker({})],
-    url: prefixRoute(`${ROUTES.GpuUsage}`),
+    url: prefixRoute(`${ROUTES.Gpu}`),
     hideFromBreadcrumbs: false,
     tabs: [],
   })
@@ -80,7 +80,7 @@ export function getTab(server: string, serverId: VariableValueSingle){
   console.log("tab" + serverId)
   return new SceneAppPage({
     title: `${server}`,
-    url: prefixRoute(`${ROUTES.GpuUsage}/${server}`),
+    url: prefixRoute(`${ROUTES.Gpu}/${server}`),
     getScene: () => getScene(serverId)
   })
 }
@@ -182,13 +182,16 @@ export function getScene(serverId: VariableValueSingle) {
       });
 
       let selectedOptions: any = []
+      let optionStringArray: string[] = []
       selectedOptions = sceneGraph.getVariables(scene).getByName("gpu" + serverId)?.getValue()
-      
+      if (selectedOptions){
+        optionStringArray = selectedOptions  
+      }
       scene.setState({
         
         body: new SceneFlexLayout({
           direction: "column",
-          children: selectedOptions.map((option: string) => {
+          children: optionStringArray.map((option: string) => {
             return new SceneFlexItem({
               $data: transformedData(queryRunner(serverId, option)),
               $behaviors: [new ShowBasedOnConditionBehavior({
