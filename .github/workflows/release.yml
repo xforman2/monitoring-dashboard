@@ -12,9 +12,9 @@ jobs:
       - uses: actions/checkout@v3
       - uses: grafana/plugin-actions/build-plugin@release
         # uncomment to enable plugin sign in
-        #with:
+        with:
         # see https://grafana.com/developers/plugin-tools/publish-a-plugin/sign-a-plugin#generate-an-access-policy-token to generate it
         # save the value in your repository secrets
-        policy_token: $
+        policy_token: ${{ secrets.GRAFANA_API_KEY }}
         #usage of GRAFANA_API_KEY is deprecated prefer policy_token
         #grafana_token: $
