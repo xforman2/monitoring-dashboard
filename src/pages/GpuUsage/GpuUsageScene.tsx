@@ -23,6 +23,7 @@ import { prefixRoute } from 'utils/utils.routing';
 import { LegendDisplayMode, SortOrder, TooltipDisplayMode, VariableHide, VisibilityMode} from '@grafana/schema';
 import { SceneRadioToggle } from 'utils/SceneRadioToggle';
 import { ShowBasedOnConditionBehavior } from 'utils/ShowBasedOnConditionBehavior';
+import { cancelLoadingPage, getLoadingPage } from 'utils/LoadingPage';
 
 
 
@@ -52,6 +53,7 @@ export const getGpuUsageAppScene = () => {
     url: prefixRoute(`${ROUTES.Gpu}`),
     hideFromBreadcrumbs: false,
     tabs: [],
+    getFallbackPage: getLoadingPage
   })
   
   page.addActivationHandler(() => {
@@ -69,6 +71,10 @@ export const getGpuUsageAppScene = () => {
     })
     return () => sub.unsubscribe();
   });
+
+  page.addActivationHandler(() => {
+    cancelLoadingPage(page)
+  })
 
 
   return new SceneApp({

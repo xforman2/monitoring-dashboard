@@ -16,6 +16,7 @@ import { EmbeddedScene,
 import { ROUTES, SQL_DATASOURCE_2 } from '../../constants';
 import { prefixRoute } from 'utils/utils.routing';
 import { LegendDisplayMode, SortOrder, TooltipDisplayMode, VariableHide, VisibilityMode } from '@grafana/schema';
+import { cancelLoadingPage, getLoadingPage } from 'utils/LoadingPage';
 
 export const getProcessAppScene = () => {
   const servers = new QueryVariable({
@@ -41,6 +42,7 @@ export const getProcessAppScene = () => {
     url: prefixRoute(`${ROUTES.ProcessDetails}`),
     hideFromBreadcrumbs: false,
     tabs: [],
+    getFallbackPage: getLoadingPage
   })
   
   page.addActivationHandler(() => {
@@ -58,6 +60,14 @@ export const getProcessAppScene = () => {
     })
     return () => sub.unsubscribe();
   });
+
+  page.addActivationHandler(() => {
+    cancelLoadingPage(page)
+  })
+
+  
+
+
   return new SceneApp({
     pages: [page]
   })
