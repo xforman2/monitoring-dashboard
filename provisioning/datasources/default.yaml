@@ -16,7 +16,7 @@ datasources:
       connMaxLifetime: 14400
       timezone: +00:00
     secureJsonData:
-      password: {password}
+      password: ${{ secrets.DB_PASS_1 }}
   - name: server-monitoring
     type: mysql
     url: db.fi.muni.cz
@@ -29,4 +29,4 @@ datasources:
       connMaxLifetime: 14400
       timezone: +00:00
     secureJsonData:
-      password: {password}
+      password: ${{ secrets.DB_PASS_2 }}

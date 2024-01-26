@@ -16,6 +16,7 @@ import { EmbeddedScene,
 import { ROUTES, SQL_DATASOURCE_2 } from '../../constants';
 import { prefixRoute } from 'utils/utils.routing';
 import { LegendDisplayMode, SortOrder, TooltipDisplayMode, VariableHide, VisibilityMode } from '@grafana/schema';
+import { cancelLoadingPage, getLoadingPage } from 'utils/LoadingPage';
 
 export const getRamAppScene = () => {
   const servers = new QueryVariable({
@@ -41,6 +42,7 @@ export const getRamAppScene = () => {
     url: prefixRoute(`${ROUTES.Ram}`),
     hideFromBreadcrumbs: false,
     tabs: [],
+    getFallbackPage: getLoadingPage
   })
   
   page.addActivationHandler(() => {
@@ -58,6 +60,10 @@ export const getRamAppScene = () => {
     })
     return () => sub.unsubscribe();
   });
+
+  page.addActivationHandler(() => {
+    cancelLoadingPage(page)
+  })
 
   return new SceneApp({
     pages: [page]

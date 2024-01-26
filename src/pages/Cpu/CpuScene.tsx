@@ -8,7 +8,6 @@ import { EmbeddedScene,
   SceneVariableSet,
   VariableValueSelectors,
   PanelBuilders,
-  SceneReactObject,
   QueryVariable,
   VariableValueSingle,
   SceneQueryRunner,
@@ -17,7 +16,8 @@ import { EmbeddedScene,
 import { ROUTES, SQL_DATASOURCE_2 } from '../../constants';
 import { prefixRoute } from 'utils/utils.routing';
 import { GraphDrawStyle, LegendDisplayMode, SortOrder,StackingMode,TooltipDisplayMode, VariableHide, VisibilityMode } from '@grafana/schema';
-import React from 'react';
+import { cancelLoadingPage, getLoadingPage } from 'utils/LoadingPage';
+
 
 export const getCpuAppScene = () => {
   const servers = new QueryVariable({
@@ -43,17 +43,7 @@ export const getCpuAppScene = () => {
     url: prefixRoute(`${ROUTES.Cpu}`),
     hideFromBreadcrumbs: false,
     tabs: [],
-    getFallbackPage: () =>
-      new SceneAppPage({
-        title: 'Loading...',
-        url: '',
-        getScene: () =>
-          new EmbeddedScene({
-            body: new SceneReactObject({
-              component: () => <p>Please wait...</p>,
-            }),
-          }),
-      }),
+    getFallbackPage: getLoadingPage
   })
   
   page.addActivationHandler(() => {
@@ -64,13 +54,17 @@ export const getCpuAppScene = () => {
           
           tabs: state.options.map((option) => {
             return getTab(option.label, option.value) 
-          })
+          })  
         })
       }
       
     })
     return () => sub.unsubscribe();
   });
+
+  page.addActivationHandler(() => {
+    cancelLoadingPage(page)
+  })
 
   return new SceneApp({
     pages: [page]
