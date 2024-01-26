@@ -29,4 +29,4 @@ datasources:
       connMaxLifetime: 14400
       timezone: +00:00
     secureJsonData:
-      password: ${{ secrets.DB_PASS_1 }}
+      password: ${{ secrets.DB_PASS_2 }}
