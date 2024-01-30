@@ -11,6 +11,7 @@ import { EmbeddedScene,
   QueryVariable,
   VariableValueSingle,
   SceneQueryRunner,
+  SceneRefreshPicker,
 } from '@grafana/scenes';
 
 import { ROUTES, SQL_DATASOURCE_2 } from '../../constants';
@@ -39,7 +40,8 @@ export const getCpuAppScene = () => {
       variables: [servers]
     }),
     title: 'CPU Dashboard',
-    controls: [new SceneTimePicker({ isOnCanvas: true })],
+    controls: [new SceneTimePicker({ isOnCanvas: true }),
+               new SceneRefreshPicker({})],
     url: prefixRoute(`${ROUTES.Cpu}`),
     hideFromBreadcrumbs: false,
     tabs: [],
@@ -78,7 +80,6 @@ export function getTab(server: string, serverId: VariableValueSingle){
   })
 }
 export function getScene(serverId: VariableValueSingle) {
-  console.log("new scene")
   const users = new QueryVariable({
     name: 'userCpu',
     label: 'User Name',
@@ -98,7 +99,7 @@ const pcpuQuery = (text: VariableValueSingle) => new SceneQueryRunner({
         datasource: SQL_DATASOURCE_2,
         refId: 'A',
         format: "time_series",
-        rawSql: `SELECT TimeCreated as time, ur.PCPU, u.login
+        rawSql: `SELECT $__timeGroup(TimeCreated, '5m', 0) as time, ur.PCPU, u.login
         FROM UserRecord ur
         JOIN User u ON ur.UserID = u.ID
         WHERE  MachineId = '${text}' AND u.login IN ($userCpu) AND $__timeFilter(TimeCreated) 
@@ -113,7 +114,7 @@ const cpuTimeQuery = (text: VariableValueSingle) => new SceneQueryRunner({
         datasource: SQL_DATASOURCE_2,
         refId: 'A',
         format: "time_series",
-        rawSql: `SELECT TimeCreated as time, TIME_TO_SEC(ur.CPUTime) as CPUTime, u.login
+        rawSql: `SELECT $__timeGroup(TimeCreated, '5m', 0) as time, TIME_TO_SEC(ur.CPUTime) as CPUTime, u.login
         FROM UserRecord ur
         JOIN User u ON ur.UserID = u.ID
         WHERE  MachineId = '${text}' AND u.login IN ($userCpu) AND $__timeFilter(TimeCreated) 
@@ -128,7 +129,7 @@ const highCpuTimeQuery = (text: VariableValueSingle) => new SceneQueryRunner({
         datasource: SQL_DATASOURCE_2,
         refId: 'A',
         format: "time_series",
-        rawSql: `SELECT TimeCreated as time, ur.HighCpuTime, u.login
+        rawSql: `SELECT $__timeGroup(TimeCreated, '5m', 0) as time, ur.HighCpuTime, u.login
         FROM UserRecord ur
         JOIN User u ON ur.UserID = u.ID
         WHERE  MachineId = '${text}' AND u.login IN ($userCpu) AND $__timeFilter(TimeCreated) 
@@ -143,7 +144,7 @@ const processCountQuery = (text: VariableValueSingle) => new SceneQueryRunner({
         datasource: SQL_DATASOURCE_2,
         refId: 'A',
         format: "time_series",
-        rawSql: `SELECT TimeCreated as time, ur.ProcessCount, u.login
+        rawSql: `SELECT $__timeGroup(TimeCreated, '5m', 0) as time, ur.ProcessCount, u.login
         FROM UserRecord ur
         JOIN User u ON ur.UserID = u.ID
         WHERE  MachineId = '${text}' AND u.login IN ($userCpu) AND $__timeFilter(TimeCreated) 
@@ -158,7 +159,7 @@ const sleepingProcessesQuery = (text: VariableValueSingle) => new SceneQueryRunn
         datasource: SQL_DATASOURCE_2,
         refId: 'A',
         format: "time_series",
-        rawSql: `SELECT TimeCreated as time, ur.IOSleeping, u.login
+        rawSql: `SELECT $__timeGroup(TimeCreated, '5m', 0) as time, ur.IOSleeping, u.login
         FROM UserRecord ur
         JOIN User u ON ur.UserID = u.ID
         WHERE  MachineId = '${text}' AND u.login IN ($userCpu) AND $__timeFilter(TimeCreated) 
@@ -257,6 +258,7 @@ function getCpuTimeseries(data: SceneDataTransformer, title: string) {
       showLegend: true,
       displayMode: LegendDisplayMode.Table,
       placement: "right",
+      calcs: ["mean"],
     })
   .setOption("tooltip", {
     mode: TooltipDisplayMode.Multi,
