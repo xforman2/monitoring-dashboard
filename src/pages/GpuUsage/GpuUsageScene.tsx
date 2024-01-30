@@ -83,7 +83,6 @@ export const getGpuUsageAppScene = () => {
 }
 
 export function getTab(server: string, serverId: VariableValueSingle){
-  console.log("tab" + serverId)
   return new SceneAppPage({
     title: `${server}`,
     url: prefixRoute(`${ROUTES.Gpu}/${server}`),
@@ -92,7 +91,6 @@ export function getTab(server: string, serverId: VariableValueSingle){
 }
 
 export function getScene(serverId: VariableValueSingle) {
-  console.log("scene" + serverId)
   const gpus = new QueryVariable({
     name: 'gpu' + serverId,
     label: 'GPU',
@@ -153,7 +151,7 @@ export function getScene(serverId: VariableValueSingle) {
           
           refId: 'A',
           format: "time_series",
-          rawSql: `SELECT RecordTimeCreated as time, gr.MemoryUsage as MemoryUsage, u.login
+          rawSql: `SELECT $__timeGroup(RecordTimeCreated, '5m', 0) as time, gr.MemoryUsage as MemoryUsage, u.login
           FROM GpuReceipt gr 
           JOIN Gpu g ON g.ID = gr.GpuID
           JOIN User u ON u.ID = gr.UserID 
@@ -171,18 +169,6 @@ export function getScene(serverId: VariableValueSingle) {
               regex: 'MemoryUsage(.*)',
               renamePattern: '$1',
             },
-          },
-          {
-            id: "convertFieldType",
-            options: {
-              conversions: [
-                {
-                  destinationType: "number",
-                  targetField: "MemoryUsage"
-                }
-              ],
-              fields: {}
-            }
           },
         ],
       });
@@ -227,6 +213,7 @@ const getPanel = (gpu: string) => {
                           showLegend: true,
                           displayMode: LegendDisplayMode.Table,
                           placement: "right",
+                          calcs: ["mean"],
                         })
                       .setOption("tooltip", {
                         mode: TooltipDisplayMode.Multi,
@@ -286,7 +273,6 @@ function getGpuTimeseries(){
     children: []
   });
   layout.subscribeToState((state) => {
-    console.log("here")
     const selectedOptions = state.$variables?.getByName("gpu")?.getValue()?.toString().split(",").sort()
     state.children = selectedOptions !== undefined ?
       selectedOptions?.map((option) => {

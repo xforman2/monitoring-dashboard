@@ -1,13 +1,11 @@
-import React, { useMemo } from 'react';
+import React from 'react';
 
-import { SceneApp, SceneAppPage } from '@grafana/scenes';
+import { SceneApp, SceneAppPage, useSceneApp } from '@grafana/scenes';
 import { getBasicScene } from './scenes';
 import { prefixRoute } from '../../utils/utils.routing';
-import { DATASOURCE_REF, ROUTES } from '../../constants';
-import { config } from '@grafana/runtime';
-import { Alert } from '@grafana/ui';
+import { ROUTES } from '../../constants';
 
-const getScene = () => {
+const getHomeAppScene = () => {
   return new SceneApp({
     pages: [
       new SceneAppPage({
@@ -21,27 +19,8 @@ const getScene = () => {
   });
 };
 export const HomePage = () => {
-  const scene = useMemo(() => getScene(), []);
+  const scene = useSceneApp(getHomeAppScene);
 
-  return (
-    <>
-      {!config.featureToggles.topnav && (
-        <Alert title="Missing topnav feature toggle">
-          Scenes are designed to work with the new navigation wrapper that will be standard in Grafana 10
-        </Alert>
-      )}
+  return <scene.Component model={scene} />;
 
-      {!config.datasources[DATASOURCE_REF.uid] && (
-        <Alert title={`Missing ${DATASOURCE_REF.uid} datasource`}>
-          These demos depend on <b>testdata</b> datasource: <code>{JSON.stringify(DATASOURCE_REF)}</code>. See{' '}
-          <a href="https://github.com/grafana/grafana/tree/main/devenv#set-up-your-development-environment">
-            https://github.com/grafana/grafana/tree/main/devenv#set-up-your-development-environment
-          </a>{' '}
-          for more details.
-        </Alert>
-      )}
-
-      <scene.Component model={scene} />
-    </>
-  );
 };

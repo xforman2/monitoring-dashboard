@@ -11,6 +11,7 @@ import { EmbeddedScene,
   QueryVariable,
   VariableValueSingle,
   SceneQueryRunner,
+  SceneRefreshPicker,
 } from '@grafana/scenes';
 
 import { ROUTES, SQL_DATASOURCE_2 } from '../../constants';
@@ -38,7 +39,8 @@ export const getRamAppScene = () => {
       variables: [servers]
     }),
     title: 'RAM Dashboard',
-    controls: [new SceneTimePicker({ isOnCanvas: true })],
+    controls: [new SceneTimePicker({ isOnCanvas: true }),
+               new SceneRefreshPicker({})],
     url: prefixRoute(`${ROUTES.Ram}`),
     hideFromBreadcrumbs: false,
     tabs: [],
@@ -98,7 +100,7 @@ const ramQuery = (serverId: VariableValueSingle) => new SceneQueryRunner({
         datasource: SQL_DATASOURCE_2,
         refId: 'A',
         format: "time_series",
-        rawSql: `SELECT TimeCreated as time, ur.PMEM, u.login
+        rawSql: `SELECT $__timeGroup(TimeCreated, '5m', 0) as time, ur.PMEM, u.login
         FROM UserRecord ur
         JOIN User u ON ur.UserID = u.ID
         WHERE  MachineId = '${serverId}' AND u.login IN ($user) AND $__timeFilter(TimeCreated) 
@@ -160,6 +162,7 @@ function getRamTimeseries(data: SceneDataTransformer) {
       showLegend: true,
       displayMode: LegendDisplayMode.Table,
       placement: "right",
+      calcs: ["mean"],
     })
   .setOption("tooltip", {
     mode: TooltipDisplayMode.Multi,
