@@ -12,11 +12,12 @@ import { EmbeddedScene,
   VariableValueSingle,
   SceneQueryRunner,
   SceneRefreshPicker,
+  behaviors,
 } from '@grafana/scenes';
 
 import { ROUTES, SQL_DATASOURCE_2 } from '../../constants';
 import { prefixRoute } from 'utils/utils.routing';
-import { LegendDisplayMode, SortOrder, TooltipDisplayMode, VariableHide, VisibilityMode } from '@grafana/schema';
+import { DashboardCursorSync, LegendDisplayMode, SortOrder, TooltipDisplayMode, VariableHide, VisibilityMode } from '@grafana/schema';
 import { cancelLoadingPage, getLoadingPage } from 'utils/LoadingPage';
 
 export const getRamAppScene = () => {
@@ -38,6 +39,7 @@ export const getRamAppScene = () => {
     $variables: new SceneVariableSet({
       variables: [servers]
     }),
+    $behaviors: [new behaviors.CursorSync({sync: DashboardCursorSync.Tooltip })],
     title: 'RAM Dashboard',
     controls: [new SceneTimePicker({ isOnCanvas: true }),
                new SceneRefreshPicker({})],

@@ -15,12 +15,13 @@ import { EmbeddedScene,
   VariableValueSingle,
   SceneRefreshPicker,
   SceneVariableValueChangedEvent,
+  behaviors,
   
 } from '@grafana/scenes';
 
 import { ROUTES, SQL_DATASOURCE_2 } from '../../constants';
 import { prefixRoute } from 'utils/utils.routing';
-import { LegendDisplayMode, SortOrder, TooltipDisplayMode, VariableHide, VisibilityMode} from '@grafana/schema';
+import { DashboardCursorSync, LegendDisplayMode, SortOrder, TooltipDisplayMode, VariableHide, VisibilityMode} from '@grafana/schema';
 import { SceneRadioToggle } from 'utils/SceneRadioToggle';
 import { ShowBasedOnConditionBehavior } from 'utils/ShowBasedOnConditionBehavior';
 import { cancelLoadingPage, getLoadingPage } from 'utils/LoadingPage';
@@ -48,6 +49,7 @@ export const getGpuUsageAppScene = () => {
       variables: [servers]
     }),
     title: 'GPU Dashboard',
+    $behaviors: [new behaviors.CursorSync({sync: DashboardCursorSync.Tooltip })],
     controls: [new SceneTimePicker({ isOnCanvas: true }),
                new SceneRefreshPicker({})],
     url: prefixRoute(`${ROUTES.Gpu}`),

@@ -12,11 +12,12 @@ import { EmbeddedScene,
   VariableValueSingle,
   SceneQueryRunner,
   SceneRefreshPicker,
+  behaviors,
 } from '@grafana/scenes';
 
 import { ROUTES, SQL_DATASOURCE_2 } from '../../constants';
 import { prefixRoute } from 'utils/utils.routing';
-import { GraphDrawStyle, LegendDisplayMode, SortOrder,StackingMode,TooltipDisplayMode, VariableHide, VisibilityMode } from '@grafana/schema';
+import { DashboardCursorSync, GraphDrawStyle, LegendDisplayMode, SortOrder,StackingMode,TooltipDisplayMode, VariableHide, VisibilityMode } from '@grafana/schema';
 import { cancelLoadingPage, getLoadingPage } from 'utils/LoadingPage';
 
 
@@ -40,6 +41,7 @@ export const getCpuAppScene = () => {
       variables: [servers]
     }),
     title: 'CPU Dashboard',
+    $behaviors: [new behaviors.CursorSync({sync: DashboardCursorSync.Tooltip })],
     controls: [new SceneTimePicker({ isOnCanvas: true }),
                new SceneRefreshPicker({})],
     url: prefixRoute(`${ROUTES.Cpu}`),
