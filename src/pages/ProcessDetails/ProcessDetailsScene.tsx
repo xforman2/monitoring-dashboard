@@ -89,7 +89,7 @@ export function getScene(serverId: VariableValueSingle) {
       label: 'User Name',
       datasource: SQL_DATASOURCE_2,
       query: "SELECT login from User",
-      sort: 1,
+      sort: 5,
       isMulti: false,
       includeAll: false
   });
