@@ -25,7 +25,7 @@ export const getRamAppScene = () => {
     label: 'Server',
     datasource: SQL_DATASOURCE_2,
     query: "SELECT Id __value, Name __text from Machine",
-    sort: 1,
+    sort: 5,
     isMulti: true,
     includeAll: true,
     maxVisibleValues: 2,
