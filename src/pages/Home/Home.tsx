@@ -9,7 +9,8 @@ const getHomeAppScene = () => {
   return new SceneApp({
     pages: [
       new SceneAppPage({
-        title: 'Home page',
+        title: 'Server Monitoring',
+        hideFromBreadcrumbs: false,
         url: prefixRoute(ROUTES.Home),
         getScene: () => {
           return getBasicScene();

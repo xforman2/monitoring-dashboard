@@ -11,10 +11,9 @@ import { EmbeddedScene,
   SceneTimePicker,
   SceneDataTransformer,
   SceneDataLayerControls,
-  sceneGraph,
   VariableValueSingle,
   SceneRefreshPicker,
-  SceneVariableValueChangedEvent,
+  SceneByVariableRepeater,
   
 } from '@grafana/scenes';
 
@@ -120,13 +119,65 @@ export function getScene(serverId: VariableValueSingle) {
     variables: [users, gpus],
   })
 
+  const queryRunner = (serverId: VariableValueSingle, gpu: VariableValueSingle) => new SceneQueryRunner({
+    queries: 
+    [{
+      datasource: SQL_DATASOURCE_2,
+      
+      refId: 'A',
+      format: "time_series",
+      rawSql: `SELECT $__timeGroup(RecordTimeCreated, '5m', 0) as time, gr.MemoryUsage as MemoryUsage, u.login
+      FROM GpuReceipt gr 
+      JOIN Gpu g ON g.ID = gr.GpuID
+      JOIN User u ON u.ID = gr.UserID 
+      WHERE MachineId = '${serverId}' AND u.login IN ($userGpu) AND g.UUID = '${gpu}' AND $__timeFilter(RecordTimeCreated)
+      ORDER BY time`,
+    }]
+  })
+
+  const transformedData = (queryRunner: SceneQueryRunner) => new SceneDataTransformer({
+    $data: queryRunner, 
+    transformations: [
+      {
+        id: 'renameByRegex',
+        options: {
+          regex: 'MemoryUsage(.*)',
+          renamePattern: '$1',
+        },
+      },
+    ],
+  });
+
   
   const scene = new EmbeddedScene({
-    $behaviors: [],
     $variables: variableSet,
-    body: new SceneFlexLayout({
-      children: []
+    body: new SceneByVariableRepeater({
+      variableName: 'gpu' + serverId,
+      getLayoutChild: (option) => {
+        return new SceneFlexLayout({
+          children: [
+            new SceneFlexItem({
+              $data: transformedData(queryRunner(serverId, option.value)),
+              $behaviors: [new ShowBasedOnConditionBehavior({
+                references: ["toggle"],
+                condition: (toggle: SceneRadioToggle) => {
+                  return toggle.state.value === "visible" 
+                }
+              })],
+
+              minHeight: 250,
+              
+              body: getPanel(option.value).setHeaderActions(new SceneDataLayerControls()).build(),
+            })
+          ]
+        })
+      },
+      body: new SceneFlexLayout({
+        direction: "column",
+        children: []
+      }),
     }),
+    
     controls: [
               new VariableValueSelectors({}),
               new SceneDataLayerControls(),
@@ -142,71 +193,10 @@ export function getScene(serverId: VariableValueSingle) {
               
   })
   
-  scene.addActivationHandler(() => {
-    const sub = variableSet.subscribeToEvent(SceneVariableValueChangedEvent, () => {
-      const queryRunner = (serverId: VariableValueSingle, gpu: string) => new SceneQueryRunner({
-        queries: 
-        [{
-          datasource: SQL_DATASOURCE_2,
-          
-          refId: 'A',
-          format: "time_series",
-          rawSql: `SELECT $__timeGroup(RecordTimeCreated, '5m', 0) as time, gr.MemoryUsage as MemoryUsage, u.login
-          FROM GpuReceipt gr 
-          JOIN Gpu g ON g.ID = gr.GpuID
-          JOIN User u ON u.ID = gr.UserID 
-          WHERE MachineId = '${serverId}' AND u.login IN ($userGpu) AND g.UUID = '${gpu}' AND $__timeFilter(RecordTimeCreated)
-          ORDER BY time`,
-        }]
-      })
-    
-      const transformedData = (queryRunner: SceneQueryRunner) => new SceneDataTransformer({
-        $data: queryRunner, 
-        transformations: [
-          {
-            id: 'renameByRegex',
-            options: {
-              regex: 'MemoryUsage(.*)',
-              renamePattern: '$1',
-            },
-          },
-        ],
-      });
-
-      let selectedOptions: any = []
-      let optionStringArray: string[] = []
-      selectedOptions = sceneGraph.getVariables(scene).getByName("gpu" + serverId)?.getValue()
-      if (selectedOptions){
-        optionStringArray = selectedOptions  
-      }
-      scene.setState({
-        
-        body: new SceneFlexLayout({
-          direction: "column",
-          children: optionStringArray.map((option: string) => {
-            return new SceneFlexItem({
-              $data: transformedData(queryRunner(serverId, option)),
-              $behaviors: [new ShowBasedOnConditionBehavior({
-                references: ["toggle"],
-                condition: (toggle: SceneRadioToggle) => {
-                  return toggle.state.value === "visible" 
-                }
-              })],
-              minHeight: 250,
-              
-              body: getPanel(option).setHeaderActions(new SceneDataLayerControls()).build(),
-              });
-            })
-          })
-        })
-      })
-    return () => sub.unsubscribe();
-    
-  })
   return scene;
 }
 
-const getPanel = (gpu: string) => { 
+const getPanel = (gpu: VariableValueSingle) => { 
   
   return PanelBuilders.timeseries()
                       .setOption("legend", {
