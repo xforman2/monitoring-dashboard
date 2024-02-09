@@ -7,7 +7,7 @@ datasources:
   - name: server-monitoring-alfa
     type: mysql
     url: db.fi.muni.cz
-    user: xgall
+    user: xforman2
     jsonData:
       database: dbxgall
       maxOpenConns: 100
