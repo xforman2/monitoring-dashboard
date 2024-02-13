@@ -90,109 +90,109 @@ export function getScene(serverId: VariableValueSingle) {
     includeAll: true,
     defaultToAll: true,
     maxVisibleValues: 2
-});
+  });
   
   
-const pcpuQuery = (text: VariableValueSingle) => new SceneQueryRunner({
-    queries: 
-    [{
-        datasource: SQL_DATASOURCE_2,
-        refId: 'A',
-        format: "time_series",
-        rawSql: `SELECT $__timeGroup(TimeCreated, '5m', 0) as time, ur.PCPU, u.login
-        FROM UserRecord ur
-        JOIN User u ON ur.UserID = u.ID
-        WHERE  MachineId = '${text}' AND u.login IN ($userCpu) AND $__timeFilter(TimeCreated) 
-        ORDER BY time`
-    }],
+  const pcpuQuery = (text: VariableValueSingle) => new SceneQueryRunner({
+      queries: 
+      [{
+          datasource: SQL_DATASOURCE_2,
+          refId: 'A',
+          format: "time_series",
+          rawSql: `SELECT $__timeGroup(TimeCreated, '5m', 0) as time, ur.PCPU, u.login
+          FROM UserRecord ur
+          JOIN User u ON ur.UserID = u.ID
+          WHERE  MachineId = '${text}' AND u.login IN ($userCpu) AND $__timeFilter(TimeCreated) 
+          ORDER BY time`
+      }],
 
-});
+  });
 
-const cpuTimeQuery = (text: VariableValueSingle) => new SceneQueryRunner({
-    queries: 
-    [{
-        datasource: SQL_DATASOURCE_2,
-        refId: 'A',
-        format: "time_series",
-        rawSql: `SELECT $__timeGroup(TimeCreated, '5m', 0) as time, TIME_TO_SEC(ur.CPUTime) as CPUTime, u.login
-        FROM UserRecord ur
-        JOIN User u ON ur.UserID = u.ID
-        WHERE  MachineId = '${text}' AND u.login IN ($userCpu) AND $__timeFilter(TimeCreated) 
-        ORDER BY time`
-    }],
+  const cpuTimeQuery = (text: VariableValueSingle) => new SceneQueryRunner({
+      queries: 
+      [{
+          datasource: SQL_DATASOURCE_2,
+          refId: 'A',
+          format: "time_series",
+          rawSql: `SELECT $__timeGroup(TimeCreated, '5m', 0) as time, TIME_TO_SEC(ur.CPUTime) as CPUTime, u.login
+          FROM UserRecord ur
+          JOIN User u ON ur.UserID = u.ID
+          WHERE  MachineId = '${text}' AND u.login IN ($userCpu) AND $__timeFilter(TimeCreated) 
+          ORDER BY time`
+      }],
 
-});
+  });
 
-const highCpuTimeQuery = (text: VariableValueSingle) => new SceneQueryRunner({
-    queries: 
-    [{
-        datasource: SQL_DATASOURCE_2,
-        refId: 'A',
-        format: "time_series",
-        rawSql: `SELECT $__timeGroup(TimeCreated, '5m', 0) as time, ur.HighCpuTime, u.login
-        FROM UserRecord ur
-        JOIN User u ON ur.UserID = u.ID
-        WHERE  MachineId = '${text}' AND u.login IN ($userCpu) AND $__timeFilter(TimeCreated) 
-        ORDER BY time`
-    }],
+  const highCpuTimeQuery = (text: VariableValueSingle) => new SceneQueryRunner({
+      queries: 
+      [{
+          datasource: SQL_DATASOURCE_2,
+          refId: 'A',
+          format: "time_series",
+          rawSql: `SELECT $__timeGroup(TimeCreated, '5m', 0) as time, ur.HighCpuTime, u.login
+          FROM UserRecord ur
+          JOIN User u ON ur.UserID = u.ID
+          WHERE  MachineId = '${text}' AND u.login IN ($userCpu) AND $__timeFilter(TimeCreated) 
+          ORDER BY time`
+      }],
 
-});
+  });
 
-const processCountQuery = (text: VariableValueSingle) => new SceneQueryRunner({
-    queries: 
-    [{
-        datasource: SQL_DATASOURCE_2,
-        refId: 'A',
-        format: "time_series",
-        rawSql: `SELECT $__timeGroup(TimeCreated, '5m', 0) as time, ur.ProcessCount, u.login
-        FROM UserRecord ur
-        JOIN User u ON ur.UserID = u.ID
-        WHERE  MachineId = '${text}' AND u.login IN ($userCpu) AND $__timeFilter(TimeCreated) 
-        ORDER BY time`
-    }],
+  const processCountQuery = (text: VariableValueSingle) => new SceneQueryRunner({
+      queries: 
+      [{
+          datasource: SQL_DATASOURCE_2,
+          refId: 'A',
+          format: "time_series",
+          rawSql: `SELECT $__timeGroup(TimeCreated, '5m', 0) as time, ur.ProcessCount, u.login
+          FROM UserRecord ur
+          JOIN User u ON ur.UserID = u.ID
+          WHERE  MachineId = '${text}' AND u.login IN ($userCpu) AND $__timeFilter(TimeCreated) 
+          ORDER BY time`
+      }],
 
-});
+  });
 
-const sleepingProcessesQuery = (text: VariableValueSingle) => new SceneQueryRunner({
-    queries: 
-    [{
-        datasource: SQL_DATASOURCE_2,
-        refId: 'A',
-        format: "time_series",
-        rawSql: `SELECT $__timeGroup(TimeCreated, '5m', 0) as time, ur.IOSleeping, u.login
-        FROM UserRecord ur
-        JOIN User u ON ur.UserID = u.ID
-        WHERE  MachineId = '${text}' AND u.login IN ($userCpu) AND $__timeFilter(TimeCreated) 
-        ORDER BY time`
-    }],
+  const sleepingProcessesQuery = (text: VariableValueSingle) => new SceneQueryRunner({
+      queries: 
+      [{
+          datasource: SQL_DATASOURCE_2,
+          refId: 'A',
+          format: "time_series",
+          rawSql: `SELECT $__timeGroup(TimeCreated, '5m', 0) as time, ur.IOSleeping, u.login
+          FROM UserRecord ur
+          JOIN User u ON ur.UserID = u.ID
+          WHERE  MachineId = '${text}' AND u.login IN ($userCpu) AND $__timeFilter(TimeCreated) 
+          ORDER BY time`
+      }],
 
-});
+  });
 
 
-const transformedData = (query: SceneQueryRunner, field: string) => new SceneDataTransformer({
-    $data: query,
-    transformations: [
-        {
-        id: 'renameByRegex',
-        options: {
-            regex: `${field}(.*)`,
-            renamePattern: '$1',
-        },
-        },
-        {
-        id: "convertFieldType",
-        options: {
-            conversions: [
-            {
-                destinationType: "number",
-                targetField: `${field}`
-            }
-            ],
-            fields: {}
-        }
-        }
-    ],
-});
+  const transformedData = (query: SceneQueryRunner, field: string) => new SceneDataTransformer({
+      $data: query,
+      transformations: [
+          {
+          id: 'renameByRegex',
+          options: {
+              regex: `${field}(.*)`,
+              renamePattern: '$1',
+          },
+          },
+          {
+          id: "convertFieldType",
+          options: {
+              conversions: [
+              {
+                  destinationType: "number",
+                  targetField: `${field}`
+              }
+              ],
+              fields: {}
+          }
+          }
+      ],
+  });
   return new EmbeddedScene({
     $variables: new SceneVariableSet({
       variables: [users]
@@ -223,7 +223,7 @@ const transformedData = (query: SceneQueryRunner, field: string) => new SceneDat
               y:8,
               width: 12,
               height: 8,
-              body: getCpuTimeseries(transformedData(highCpuTimeQuery(serverId), 'HighCpuTime'), "High Cpu Time").setUnit("s")
+              body: getCpuTimeseries(transformedData(highCpuTimeQuery(serverId), 'HighCpuTime'), "High Cpu Time")
                   .setCustomFieldConfig('drawStyle', GraphDrawStyle.Bars).setCustomFieldConfig('fillOpacity', 100)
                   .setCustomFieldConfig('stacking',{mode: StackingMode.Normal}).build()
             }),

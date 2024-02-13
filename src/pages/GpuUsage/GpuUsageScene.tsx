@@ -94,7 +94,7 @@ export function getScene(serverId: VariableValueSingle) {
     name: 'gpu' + serverId,
     label: 'GPU',
     datasource: SQL_DATASOURCE_2,
-    query: `SELECT UUID from Gpu WHERE MachineID = ${serverId}`,
+    query: `SELECT UUID as __value, Name as __text from Gpu WHERE MachineID = ${serverId}`,
     sort: 5,
     isMulti: true,
     includeAll: true,
@@ -167,7 +167,7 @@ export function getScene(serverId: VariableValueSingle) {
 
               minHeight: 250,
               
-              body: getPanel(option.value).setHeaderActions(new SceneDataLayerControls()).build(),
+              body: getPanel(option.label).setHeaderActions(new SceneDataLayerControls()).build(),
             })
           ]
         })
