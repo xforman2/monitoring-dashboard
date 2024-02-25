@@ -12,11 +12,12 @@ import { EmbeddedScene,
   VariableValueSingle,
   SceneQueryRunner,
   SceneRefreshPicker,
+  behaviors,
 } from '@grafana/scenes';
 
 import { ROUTES, SQL_DATASOURCE_2 } from '../../constants';
 import { prefixRoute } from 'utils/utils.routing';
-import { GraphDrawStyle, LegendDisplayMode, SortOrder,StackingMode,TooltipDisplayMode, VariableHide, VisibilityMode } from '@grafana/schema';
+import { DashboardCursorSync, GraphDrawStyle, LegendDisplayMode, SortOrder,StackingMode,TooltipDisplayMode, VariableHide, VisibilityMode } from '@grafana/schema';
 import { cancelLoadingPage, getLoadingPage } from 'utils/LoadingPage';
 
 
@@ -194,6 +195,9 @@ export function getScene(serverId: VariableValueSingle) {
       ],
   });
   return new EmbeddedScene({
+    $behaviors: [new behaviors.CursorSync({
+      sync: DashboardCursorSync.Crosshair
+    })],
     $variables: new SceneVariableSet({
       variables: [users]
     }),

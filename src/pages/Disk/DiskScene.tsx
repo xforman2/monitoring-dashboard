@@ -12,11 +12,12 @@ import { EmbeddedScene,
   SceneRefreshPicker,
   VariableValueSingle,
   SceneQueryRunner,
+  
 } from '@grafana/scenes';
 
 import { ROUTES, SQL_DATASOURCE_2 } from '../../constants';
 import { prefixRoute } from 'utils/utils.routing';
-import { LegendDisplayMode, SortOrder, TooltipDisplayMode, VariableHide} from '@grafana/schema';
+import { ThresholdsMode, TooltipDisplayMode, VariableHide, VisibilityMode} from '@grafana/schema';
 import { cancelLoadingPage, getLoadingPage } from 'utils/LoadingPage';
 
 export const getDiskAppScene = () => {
@@ -81,16 +82,22 @@ export function getTab(server: string, serverId: VariableValueSingle){
   })
 }
 function getDiskTimeline(data: SceneDataTransformer) {
-  return PanelBuilders.statetimeline()
-  .setOption("legend", {
-      showLegend: true,
-      displayMode: LegendDisplayMode.Table,
-      placement: "right",
-    })
+  return PanelBuilders.statushistory()
   .setOption("tooltip", {
-    mode: TooltipDisplayMode.Multi,
-    sort: SortOrder.Descending
+    mode: TooltipDisplayMode.Single,
   })
+  .setMin(0)
+  .setMax(100000000)
+  .setThresholds({
+    mode: ThresholdsMode.Percentage,
+    steps: [ 
+              {"value": 20, "color": "#73BF69"},
+              {"value": 40, "color": "#FADE2A"},
+              {"value": 60, "color": "#FF9820"},
+              {"value": 80, "color": "F2495C"}
+            ]
+  })
+  .setOption("showValue", VisibilityMode.Never)
   .setData(data)
                           
 }

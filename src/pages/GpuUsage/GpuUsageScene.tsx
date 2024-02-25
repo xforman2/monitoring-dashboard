@@ -14,12 +14,13 @@ import { EmbeddedScene,
   VariableValueSingle,
   SceneRefreshPicker,
   SceneByVariableRepeater,
+  behaviors,
   
 } from '@grafana/scenes';
 
 import { ROUTES, SQL_DATASOURCE_2 } from '../../constants';
 import { prefixRoute } from 'utils/utils.routing';
-import { LegendDisplayMode, SortOrder, TooltipDisplayMode, VariableHide, VisibilityMode} from '@grafana/schema';
+import { DashboardCursorSync, LegendDisplayMode, SortOrder, TooltipDisplayMode, VariableHide, VisibilityMode} from '@grafana/schema';
 import { SceneRadioToggle } from 'utils/SceneRadioToggle';
 import { ShowBasedOnConditionBehavior } from 'utils/ShowBasedOnConditionBehavior';
 import { cancelLoadingPage, getLoadingPage } from 'utils/LoadingPage';
@@ -150,6 +151,9 @@ export function getScene(serverId: VariableValueSingle) {
 
   
   const scene = new EmbeddedScene({
+    $behaviors: [new behaviors.CursorSync({
+      sync: DashboardCursorSync.Crosshair
+    })],
     $variables: variableSet,
     body: new SceneByVariableRepeater({
       variableName: 'gpu' + serverId,

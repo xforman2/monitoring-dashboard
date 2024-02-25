@@ -12,11 +12,12 @@ import { EmbeddedScene,
   VariableValueSingle,
   SceneQueryRunner,
   SceneRefreshPicker,
+  behaviors,
 } from '@grafana/scenes';
 
 import { ROUTES, SQL_DATASOURCE_2 } from '../../constants';
 import { prefixRoute } from 'utils/utils.routing';
-import { LegendDisplayMode, SortOrder, TooltipDisplayMode, VariableHide, VisibilityMode } from '@grafana/schema';
+import { DashboardCursorSync, LegendDisplayMode, SortOrder, TooltipDisplayMode, VariableHide, VisibilityMode } from '@grafana/schema';
 import { cancelLoadingPage, getLoadingPage } from 'utils/LoadingPage';
 
 export const getProcessAppScene = () => {
@@ -35,6 +36,9 @@ export const getProcessAppScene = () => {
   });
 
   const page = new SceneAppPage({
+    $behaviors: [new behaviors.CursorSync({
+      sync: DashboardCursorSync.Crosshair
+    })],
     $variables: new SceneVariableSet({
       variables: [servers]
     }),
