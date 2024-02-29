@@ -109,20 +109,6 @@ export function getScene(serverId: VariableValueSingle) {
 
   });
 
-  const cpuTimeQuery = (text: VariableValueSingle) => new SceneQueryRunner({
-      queries: 
-      [{
-          datasource: SQL_DATASOURCE_2,
-          refId: 'A',
-          format: "time_series",
-          rawSql: `SELECT $__timeGroup(TimeCreated, '5m', 0) as time, TIME_TO_SEC(ur.CPUTime) as CPUTime, u.login
-          FROM UserRecord ur
-          JOIN User u ON ur.UserID = u.ID
-          WHERE  MachineId = '${text}' AND u.login IN ($userCpu) AND $__timeFilter(TimeCreated) 
-          ORDER BY time`
-      }],
-
-  });
 
   const highCpuTimeQuery = (text: VariableValueSingle) => new SceneQueryRunner({
       queries: 
@@ -208,23 +194,14 @@ export function getScene(serverId: VariableValueSingle) {
             new SceneGridItem({
               x:0,
               y:0,
-              width: 24,
+              width: 12,
               height: 8,
               body: getCpuTimeseries(transformedData(pcpuQuery(serverId), 'PCPU'), "CPU %").setUnit("%").build()
             }),
             new SceneGridItem({
-              x:0,
-              y:8,
-              width: 12,
-              height: 8,
-              body: getCpuTimeseries(transformedData(cpuTimeQuery(serverId), 'CPUTime'), "CPU Time").setUnit("s")
-                  .setCustomFieldConfig('drawStyle', GraphDrawStyle.Bars).setCustomFieldConfig('fillOpacity', 100)
-                  .setCustomFieldConfig('stacking',{mode: StackingMode.Normal}).build()
-            }),
-            new SceneGridItem({
 
               x:12,
-              y:8,
+              y:0,
               width: 12,
               height: 8,
               body: getCpuTimeseries(transformedData(highCpuTimeQuery(serverId), 'HighCpuTime'), "High Cpu Time")
@@ -233,7 +210,7 @@ export function getScene(serverId: VariableValueSingle) {
             }),
             new SceneGridItem({
               x:0,
-              y:16,
+              y:8,
               width: 12,
               height: 8,
               body: getCpuTimeseries(transformedData(processCountQuery(serverId), 'ProcessCount'), "Process Count")
@@ -242,7 +219,7 @@ export function getScene(serverId: VariableValueSingle) {
             }),
             new SceneGridItem({
               x: 12,
-              y:16,
+              y:8,
               width: 12,
               height: 8,
               body: getCpuTimeseries(transformedData(sleepingProcessesQuery(serverId), 'IOSleeping'), "Sleeping Processes")

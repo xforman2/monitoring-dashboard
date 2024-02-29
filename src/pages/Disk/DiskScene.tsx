@@ -94,7 +94,7 @@ function getDiskTimeline(data: SceneDataTransformer) {
               {"value": 20, "color": "#73BF69"},
               {"value": 40, "color": "#FADE2A"},
               {"value": 60, "color": "#FF9820"},
-              {"value": 80, "color": "F2495C"}
+              {"value": 80, "color": "#F2495C"}
             ]
   })
   .setOption("showValue", VisibilityMode.Never)
