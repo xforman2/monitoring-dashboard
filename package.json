@@ -1,6 +1,6 @@
 {
   "name": "server-monitoring",
-  "version": "2.2.2",
+  "version": "2.3.0",
   "description": "",
   "scripts": {
     "build": "webpack -c ./.config/webpack/webpack.config.ts --env production",
