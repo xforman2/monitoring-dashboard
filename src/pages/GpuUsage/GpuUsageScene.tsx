@@ -15,6 +15,8 @@ import { EmbeddedScene,
   SceneRefreshPicker,
   SceneByVariableRepeater,
   behaviors,
+  dataLayers,
+  SceneDataLayers,
   
 } from '@grafana/scenes';
 
@@ -24,6 +26,7 @@ import { DashboardCursorSync, LegendDisplayMode, SortOrder, TooltipDisplayMode, 
 import { SceneRadioToggle } from 'utils/SceneRadioToggle';
 import { ShowBasedOnConditionBehavior } from 'utils/ShowBasedOnConditionBehavior';
 import { cancelLoadingPage, getLoadingPage } from 'utils/LoadingPage';
+import { AnnotationEventFieldSource } from '@grafana/data';
 
 
 
@@ -95,7 +98,7 @@ export function getScene(serverId: VariableValueSingle) {
     name: 'gpu' + serverId,
     label: 'GPU',
     datasource: SQL_DATASOURCE_2,
-    query: `SELECT UUID as __value, Name as __text from Gpu WHERE MachineID = ${serverId}`,
+    query: `SELECT Id as __value, Name as __text from Gpu WHERE MachineID = ${serverId}`,
     sort: 5,
     isMulti: true,
     includeAll: true,
@@ -131,7 +134,7 @@ export function getScene(serverId: VariableValueSingle) {
       FROM GpuReceipt gr 
       JOIN Gpu g ON g.ID = gr.GpuID
       JOIN User u ON u.ID = gr.UserID 
-      WHERE MachineId = '${serverId}' AND u.login IN ($userGpu) AND g.UUID = '${gpu}' AND $__timeFilter(RecordTimeCreated)
+      WHERE MachineId = '${serverId}' AND u.login IN ($userGpu) AND g.Id = '${gpu}' AND $__timeFilter(RecordTimeCreated)
       ORDER BY time`,
     }]
   })
@@ -149,6 +152,48 @@ export function getScene(serverId: VariableValueSingle) {
     ],
   });
 
+  const globalAnnotations = (gpu: VariableValueSingle) => new dataLayers.AnnotationsDataLayer({
+    name: `Reservation`,
+    query: {
+      name: 'New annotation',
+      datasource: SQL_DATASOURCE_2,
+      enable: true,
+      iconColor: 'red',
+      target: {
+        refId: 'Anno',
+        // @ts-ignore
+        format: 'table',
+        // @ts-ignore
+        rawSql: `SELECT r.Id, UserID, Start, End, Login
+               FROM Reservation r JOIN User u ON UserID = u.Id 
+               WHERE login IN ($userGpu) AND GpuId = '${gpu}'`
+        
+      },
+      mappings: {
+        id: {
+          source: AnnotationEventFieldSource.Field,
+          value: "Id"
+        },
+        text: {
+          source: AnnotationEventFieldSource.Text,
+          value: "reserved this gpu"
+        },
+        time: {
+          source: AnnotationEventFieldSource.Field,
+          value: "Start"
+        },
+        timeEnd: {
+          source: AnnotationEventFieldSource.Field,
+          value: "End"
+        },
+        title: {
+          source: AnnotationEventFieldSource.Field,
+          value: "login"
+        }
+      }
+    },
+  });
+
   
   const scene = new EmbeddedScene({
     $behaviors: [new behaviors.CursorSync({
@@ -159,20 +204,29 @@ export function getScene(serverId: VariableValueSingle) {
       variableName: 'gpu' + serverId,
       getLayoutChild: (option) => {
         return new SceneFlexLayout({
+          $data: new SceneDataLayers({
+            layers: [globalAnnotations(option.value)]
+          }),
           children: [
             new SceneFlexItem({
               $data: transformedData(queryRunner(serverId, option.value)),
-              $behaviors: [new ShowBasedOnConditionBehavior({
-                references: ["toggle"],
-                condition: (toggle: SceneRadioToggle) => {
-                  return toggle.state.value === "visible" 
-                }
-              })],
+              $behaviors: [
+                new ShowBasedOnConditionBehavior({
+                  references: ["toggle"],
+                  condition: (toggle: SceneRadioToggle) => {
+                    return toggle.state.value === "visible" 
+                  }
+                }),
+                
+              ],
 
               minHeight: 250,
               
-              body: getPanel(option.label).setHeaderActions(new SceneDataLayerControls()).build(),
+              body: getPanel(option.label)
+                    .setHeaderActions(new SceneDataLayerControls())
+                    .build(),
             })
+
           ]
         })
       },
@@ -216,79 +270,5 @@ const getPanel = (gpu: VariableValueSingle) => {
                       .setCustomFieldConfig('showPoints', VisibilityMode.Never)
                       .setUnit("MB").setTitle(gpu + ' Memory Usage')
 }
-/*
-function getGpuTimeseries(){
-
-
-  const globalAnnotations = (gpu: string) => new dataLayers.AnnotationsDataLayer({
-    name: `Reservation`,
-    query: {
-      name: 'New annotation',
-      datasource: SQL_DATASOURCE_1,
-      enable: true,
-      iconColor: 'red',
-      target: {
-        refId: 'Anno',
-        // @ts-ignore
-        format: 'table',
-        // @ts-ignore
-        rawSql: `SELECT r.Id, UserID, StartTime, EndTime, XLogin, 'Reservation' 
-               FROM dbxforman2.Reservation r JOIN User u ON UserID = u.Id 
-               WHERE Xlogin IN ($user) AND GPUUUID = '${gpu}'`
-        
-      },
-      mappings: {
-        id: {
-          source: AnnotationEventFieldSource.Field,
-          value: "Id"
-        },
-        text: {
-          source: AnnotationEventFieldSource.Text,
-          value: "reserved this gpu"
-        },
-        time: {
-          source: AnnotationEventFieldSource.Field,
-          value: "StartTime"
-        },
-        timeEnd: {
-          source: AnnotationEventFieldSource.Field,
-          value: "EndTime"
-        },
-        title: {
-          source: AnnotationEventFieldSource.Field,
-          value: "Xlogin"
-        }
-      }
-    },
-  });
-  const layout = new SceneFlexLayout({
-    direction: "column",
-    minHeight: 300,
-    children: []
-  });
-  layout.subscribeToState((state) => {
-    const selectedOptions = state.$variables?.getByName("gpu")?.getValue()?.toString().split(",").sort()
-    state.children = selectedOptions !== undefined ?
-      selectedOptions?.map((option) => {
-        return new SceneFlexItem({
-          $data: new SceneDataLayers({
-            layers: [globalAnnotations(option)]
-          }),
-          body: getPanel(option).setHeaderActions(new SceneDataLayerControls()).build(),
-        });
-      }) : [ 
-        new SceneFlexItem({
-          body: new SceneCanvasText({
-            align: 'center',
-            text: `Please select GPU first`,
-            fontSize: 30,
-          }),
-        }),
-      ]
-  })
-  
-  return layout;
-}
-*/
 
 
