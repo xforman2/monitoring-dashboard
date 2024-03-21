@@ -2,7 +2,7 @@ import React from 'react';
 
 import { SceneApp, SceneAppPage, useSceneApp } from '@grafana/scenes';
 import { getBasicScene } from './scenes';
-import { prefixRoute } from '../../utils/utils.routing';
+import { prefixRoute } from '../../utils/Routing';
 import { ROUTES } from '../../constants';
 
 const getHomeAppScene = () => {

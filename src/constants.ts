@@ -7,7 +7,7 @@ export enum ROUTES {
   Gpu = 'gpu',
   Cpu = "cpu",
   Ram = "ram",
-  Disk = "disk",
+  Drive = "drive",
   ProcessDetails = "process-details"
 }
 

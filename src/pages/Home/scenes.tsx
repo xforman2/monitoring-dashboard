@@ -6,7 +6,7 @@ import {
 import { Card } from '@grafana/ui';
 import { ROUTES } from '../../constants';
 import React from 'react';
-import { prefixRoute } from 'utils/utils.routing';
+import { prefixRoute } from 'utils/Routing';
 import { Cpu, HardDrive, Activity } from 'react-feather';
 import { BsGpuCard } from 'react-icons/bs';
 import { FaMemory } from 'react-icons/fa';
@@ -36,7 +36,7 @@ export function getBasicScene(templatised = true, seriesToShow = '__server_names
         }),
         new SceneReactObject({
           reactNode: (
-            <Card href={prefixRoute(ROUTES.Disk)}>
+            <Card href={prefixRoute(ROUTES.Drive)}>
                 <h3 className='center-content'>Disk Dashboard</h3>
                 <HardDrive size={50}></HardDrive >    
             </Card>
