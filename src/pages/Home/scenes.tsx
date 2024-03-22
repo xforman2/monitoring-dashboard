@@ -12,7 +12,7 @@ import { BsGpuCard } from 'react-icons/bs';
 import { FaMemory } from 'react-icons/fa';
 import '../../styles/main.css';
 
-export function getBasicScene(templatised = true, seriesToShow = '__server_names') {
+export const getBasicScene = (templatised = true, seriesToShow = '__server_names') => {
   
   return new EmbeddedScene({
     body: new SceneFlexLayout({
@@ -37,7 +37,7 @@ export function getBasicScene(templatised = true, seriesToShow = '__server_names
         new SceneReactObject({
           reactNode: (
             <Card href={prefixRoute(ROUTES.Drive)}>
-                <h3 className='center-content'>Disk Dashboard</h3>
+                <h3 className='center-content'>Drive Dashboard</h3>
                 <HardDrive size={50}></HardDrive >    
             </Card>
           ),

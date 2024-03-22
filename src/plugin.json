@@ -52,8 +52,8 @@
     },
     {
       "type": "page",
-      "name": "Disk",
-      "path": "/a/xforman2-servermonitoring-app/disk",
+      "name": "Drive",
+      "path": "/a/xforman2-servermonitoring-app/drive",
       "role": "Viewer",
       "addToNav": true,
       "defaultNav": false
