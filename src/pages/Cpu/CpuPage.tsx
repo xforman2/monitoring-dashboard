@@ -1,18 +1,12 @@
-import React from 'react';
 import { getCpuScene } from './CpuScene';
-import { useSceneApp } from '@grafana/scenes';
-import { SceneMetaData, getAppScene } from 'utils/GlobalSceneObjects';
+import { PageMetaData, getAppPage } from '../SceneAppPageInitialization';
 import { prefixRoute } from 'utils/Routing';
 import { ROUTES } from '../../constants';
 
-const cpuMetaData: SceneMetaData = {
+const cpuMetaData: PageMetaData = {
   title: "CPU Dashboard",
   route: prefixRoute(`${ROUTES.Cpu}`),
-  description: ""
+  description: "This dashboard show utilization of CPU"
 }
-const getCpuAppScene = () => getAppScene(cpuMetaData, getCpuScene)
-export const CpuPluginPage = () => {
-  const scene = useSceneApp(getCpuAppScene);
+export const getCpuAppPage = () => getAppPage(cpuMetaData, getCpuScene)
 
-  return <scene.Component model={scene} />;
-};

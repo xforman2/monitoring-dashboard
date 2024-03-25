@@ -1,21 +1,23 @@
-import React from 'react';
 import { getProcessDetailsScene } from './ProcessDetailsScene';
-import { useSceneApp } from '@grafana/scenes';
-import { SceneMetaData, getAppScene } from 'utils/GlobalSceneObjects';
+import { PageMetaData, getAppPage } from '../SceneAppPageInitialization';
 import { prefixRoute } from 'utils/Routing';
 import { ROUTES } from '../../constants';
+import React from 'react';
 
-const processMetaData: SceneMetaData = {
+const processMetaData: PageMetaData = {
   title: "Process Details Dashboard",
   route: prefixRoute(`${ROUTES.ProcessDetails}`),
-  description: ""
+  description: <div>
+                <p>This dashboard displays user processes that require attention and have exceeded one of these thresholds:</p>
+                <ul className='indented-list'>
+                  <li>CPU Utilization of the process &gt; 400%</li>
+                  <li>CPU Time of the process &gt; 1 hour</li>
+                  <li>Number or GPUs utilized by the process &gt; 0</li>
+                </ul>
+              </div>
+
 }
 
-const getProcessDetailsAppScene = () => {
-  return getAppScene( processMetaData, getProcessDetailsScene);
+export const getProcessDetailsAppPage = () => {
+  return getAppPage( processMetaData, getProcessDetailsScene);
 }
-export const ProcessPluginPage = () => {
-  const scene = useSceneApp(getProcessDetailsAppScene);
-
-  return <scene.Component model={scene} />;
-};

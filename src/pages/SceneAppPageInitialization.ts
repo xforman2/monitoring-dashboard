@@ -1,12 +1,22 @@
-import { EmbeddedScene, QueryVariable, SceneApp, SceneAppPage, SceneRefreshPicker, SceneTimePicker, SceneVariableSet, VariableValueSingle, behaviors } from "@grafana/scenes";
+import { EmbeddedScene, QueryVariable, SceneAppPage, SceneRefreshPicker, SceneTimePicker, SceneVariableSet, VariableValueSingle, behaviors } from "@grafana/scenes";
 import { DashboardCursorSync, VariableHide } from "@grafana/schema";
-import { SQL_DATASOURCE_2 } from "./../constants";
-import { getLoadingPage } from "./LoadingPage";
+import { SQL_DATASOURCE_2 } from "../constants";
+import { getLoadingPage } from "./LoadingFallbackPage";
+import { ReactNode } from "react";
 
-export interface SceneMetaData {
+export interface PageMetaData {
+    title: string,
+    description: string | ReactNode,
+    route: string
+}
+
+export interface PanelMetaData{
     title: string,
     description: string,
-    route: string
+    unit: string
+    min?: number
+    max?: number
+
 }
 
 export type GetSceneFunction = (serverId: VariableValueSingle, server: string) => EmbeddedScene;
@@ -25,7 +35,7 @@ export const servers = new QueryVariable({
   
 });
 
-export const getAppScene = (sceneMetaData: SceneMetaData, getScene: GetSceneFunction) => {
+export const getAppPage = (pageMetaData: PageMetaData, getScene: GetSceneFunction) => {
     const appServers = servers.clone()
     const page = new SceneAppPage({
         $behaviors: [new behaviors.CursorSync({
@@ -34,10 +44,12 @@ export const getAppScene = (sceneMetaData: SceneMetaData, getScene: GetSceneFunc
         $variables: new SceneVariableSet({
         variables: [appServers]
         }),
-        title: sceneMetaData.title,
+        title: pageMetaData.title,
+        subTitle: pageMetaData.description,
+        
         controls: [new SceneTimePicker({ isOnCanvas: true }),
                     new SceneRefreshPicker({})],
-        url: sceneMetaData.route,
+        url: pageMetaData.route,
         hideFromBreadcrumbs: false,
         tabs: [],
         getFallbackPage: getLoadingPage
@@ -49,7 +61,7 @@ export const getAppScene = (sceneMetaData: SceneMetaData, getScene: GetSceneFunc
             page.setState({
             
             tabs: state.options.map((option) => {
-                return getTab(sceneMetaData.route, option.label, option.value, getScene) 
+                return getTab(pageMetaData.route, option.label, option.value, getScene) 
             })
             })
         }
@@ -61,9 +73,7 @@ export const getAppScene = (sceneMetaData: SceneMetaData, getScene: GetSceneFunc
     page.addActivationHandler(() => {
         cancelLoadingPage(page)
     })
-    return new SceneApp({
-        pages: [page]
-      })
+    return page;
 }
 
 export function getTab(route: string, server: string, serverId: VariableValueSingle, getScene: GetSceneFunction){

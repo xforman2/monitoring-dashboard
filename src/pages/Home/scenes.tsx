@@ -12,7 +12,7 @@ import { BsGpuCard } from 'react-icons/bs';
 import { FaMemory } from 'react-icons/fa';
 import '../../styles/main.css';
 
-export const getBasicScene = (templatised = true, seriesToShow = '__server_names') => {
+export const getHomeScene = () => {
   
   return new EmbeddedScene({
     body: new SceneFlexLayout({

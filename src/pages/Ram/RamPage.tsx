@@ -1,21 +1,14 @@
-import React from 'react';
 import {  getRamScene } from './RamScene';
-import { useSceneApp } from '@grafana/scenes';
-import { SceneMetaData, getAppScene } from 'utils/GlobalSceneObjects';
+import { PageMetaData, getAppPage } from '../SceneAppPageInitialization';
 import { prefixRoute } from 'utils/Routing';
 import { ROUTES } from '../../constants';
 
-const ramMetaData: SceneMetaData = {
+const ramMetaData: PageMetaData = {
   title: "RAM Dashboard",
   route: prefixRoute(`${ROUTES.Ram}`),
-  description: ""
+  description: "This dashboard shows utilization of RAM"
 }
 
-const getRamAppScene = () => {
-  return getAppScene(ramMetaData, getRamScene)
+export const getRamAppPage = () => {
+  return getAppPage(ramMetaData, getRamScene)
 }
-export const RamPluginPage = () => {
-  const scene = useSceneApp(getRamAppScene);
-
-  return <scene.Component model={scene} />;
-};

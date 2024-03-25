@@ -1,7 +1,7 @@
 import { EmbeddedScene, SceneAppPage, SceneReactObject } from "@grafana/scenes";
 import React from "react";
 
-export function getLoadingPage(){
+export const getLoadingPage = () =>{
   return new SceneAppPage({
       title: 'Loading...',
       url: '',

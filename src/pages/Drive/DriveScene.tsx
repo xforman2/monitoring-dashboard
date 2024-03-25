@@ -13,15 +13,33 @@ import { EmbeddedScene,
 
 import {  SQL_DATASOURCE_2 } from '../../constants';
 import { ThresholdsMode, TooltipDisplayMode, VisibilityMode} from '@grafana/schema';
+import { PanelMetaData } from '../SceneAppPageInitialization';
 
+const blocksPanelMetaData: PanelMetaData = {
+  title: "Block Usage",
+  description: "This timeline shows the amount of blocks utilized by a user.",
+  unit: "",
+  max: 100000000
+}
 
-const getDiskTimeline = (data: SceneDataTransformer) => {
+const filesPanelMetaData: PanelMetaData = {
+  title: "File Count",
+  description: "This timeline shows the amount of user`s files.",
+  unit: "",
+  max: 100000000
+}
+
+const getDriveStatusHistory = (data: SceneDataTransformer, panelMetaData: PanelMetaData) => {
   return PanelBuilders.statushistory()
+  .setTitle(panelMetaData.title)
+  .setDescription(panelMetaData.description)
+  .setUnit(panelMetaData.unit)  
   .setOption("tooltip", {
     mode: TooltipDisplayMode.Single,
   })
-  .setMin(0)
-  .setMax(100000000)
+  .setMin(panelMetaData.min)
+  .setMax(panelMetaData.max)
+
   .setThresholds({
     mode: ThresholdsMode.Percentage,
     steps: [ 
@@ -56,16 +74,16 @@ export function getDriveScene(serverId: VariableValueSingle) {
             y: 0,
             width: 24,
             height: 14,
-            body: getDiskTimeline(transformedData(diskQuery(serverId), 'BlocksUsed'))
-            .setTitle("Disk Usage").build()
+            body: getDriveStatusHistory(transformedData(diskQuery(serverId), 'BlocksUsed'), blocksPanelMetaData)
+            .build()
           }),
           new SceneGridItem({
             x:0,
             y:14,
             width: 24,
             height: 14,
-            body: getDiskTimeline(transformedData(filesQuery(serverId), 'FilesUsed'))
-            .setTitle("Number of Files").build()
+            body: getDriveStatusHistory(transformedData(filesQuery(serverId), 'FilesUsed'), filesPanelMetaData)
+            .build()
           }),
         
       ]
@@ -77,6 +95,7 @@ export function getDriveScene(serverId: VariableValueSingle) {
 const users = new QueryVariable({
   name: 'userDrive',
   label: 'User Name',
+  description: "Select one or multiple users",
   datasource: SQL_DATASOURCE_2,
   query: "SELECT login from User",
   sort: 5,
@@ -107,11 +126,11 @@ const filesQuery = (text: VariableValueSingle) => new SceneQueryRunner({
         datasource: SQL_DATASOURCE_2,
         refId: 'A',
         format: "time_series",
-        rawSql: `SELECT TimeCreated as time, Login, FilesUsed
-        FROM UserDiskRecord dr
-        JOIN User u ON UserId = u.Id
-        WHERE FilesUsed IS NOT NULL AND MachineId = '${text}' AND Login  IN ($userDrive) AND $__timeFilter(TimeCreated) 
-        ORDER BY time`
+          rawSql: `SELECT TimeCreated as time, Login, FilesUsed
+          FROM UserDiskRecord dr
+          JOIN User u ON UserId = u.Id
+          WHERE FilesUsed IS NOT NULL AND MachineId = '${text}' AND Login  IN ($userDrive) AND $__timeFilter(TimeCreated) 
+          ORDER BY time`
     }],
 
 });
