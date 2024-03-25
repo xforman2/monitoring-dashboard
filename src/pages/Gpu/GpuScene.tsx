@@ -6,21 +6,17 @@ import { EmbeddedScene,
   SceneVariableSet, 
   VariableValueSelectors, 
   SceneQueryRunner,
-  
-  
   SceneDataTransformer,
   SceneDataLayerControls,
   VariableValueSingle,
-  
   SceneByVariableRepeater,
-  behaviors,
   dataLayers,
-  SceneDataLayers,
+  SceneDataLayerSet,
   
 } from '@grafana/scenes';
 
 import { SQL_DATASOURCE_2 } from '../../constants';
-import { DashboardCursorSync, LegendDisplayMode, SortOrder, TooltipDisplayMode, VisibilityMode} from '@grafana/schema';
+import { LegendDisplayMode, SortOrder, TooltipDisplayMode, VisibilityMode} from '@grafana/schema';
 import { SceneRadioToggle } from 'utils/SceneRadioToggle';
 import { ShowBasedOnConditionBehavior } from 'utils/ShowBasedOnConditionBehavior';
 import { AnnotationEventFieldSource } from '@grafana/data';
@@ -29,6 +25,7 @@ import { AnnotationEventFieldSource } from '@grafana/data';
 const users = new QueryVariable({
   name: 'userGpu',
   label: 'User Name',
+  description: "Select one or multiple users",
   datasource: SQL_DATASOURCE_2,
   query: "SELECT login from User",
   sort: 5,
@@ -59,15 +56,16 @@ export const getGpuScene = (serverId: VariableValueSingle, server: string): Embe
   })
   
   const scene = new EmbeddedScene({
-    $behaviors: [new behaviors.CursorSync({
-      sync: DashboardCursorSync.Crosshair
-    })],
     $variables: variableSet,
     body: new SceneByVariableRepeater({
       variableName: `gpu${server}`,
+      body: new SceneFlexLayout({
+        direction: "column",
+        children: []
+      }),
       getLayoutChild: (option) => {
         return new SceneFlexLayout({
-          $data: new SceneDataLayers({
+          $data: new SceneDataLayerSet({
             layers: [annotations(option.value)]
           }),
           children: [
@@ -85,17 +83,14 @@ export const getGpuScene = (serverId: VariableValueSingle, server: string): Embe
 
               minHeight: 250,
               
-              body: getPanel(option.label)
+              body: getGpuTimeseries(option.label)
                     .build(),
             })
 
           ]
         })
       },
-      body: new SceneFlexLayout({
-        direction: "column",
-        children: []
-      }),
+      
     }),
     
     controls: [
@@ -123,7 +118,7 @@ const gpuMemoryUsage = (serverId: VariableValueSingle, gpu: VariableValueSingle)
       
       refId: 'A',
       format: "time_series",
-      rawSql: `SELECT $__timeGroup(RecordTimeCreated, '5m', 0) as time, gr.MemoryUsage as MemoryUsage, u.login
+      rawSql: `SELECT $__timeGroup(RecordTimeCreated, $__interval, 0) as time, gr.MemoryUsage / g.AvailableMemoryMB * 100 as MemoryUsage, u.login
       FROM GpuReceipt gr 
       JOIN Gpu g ON g.ID = gr.GpuID
       JOIN User u ON u.ID = gr.UserID 
@@ -188,7 +183,8 @@ const annotations = (gpu: VariableValueSingle) => new dataLayers.AnnotationsData
   },
 });
 
-const getPanel = (gpu: VariableValueSingle) => { 
+const getGpuTimeseries = (gpu: VariableValueSingle) => { 
+  const gpuDesc = `This graph shows VRAM utilization on ${gpu} of users over time with reservation annotations`
   
   return PanelBuilders.timeseries()
                       .setOption("legend", {
@@ -202,8 +198,9 @@ const getPanel = (gpu: VariableValueSingle) => {
                         sort: SortOrder.Descending
                       })
                       .setCustomFieldConfig('showPoints', VisibilityMode.Never)
-                      .setUnit("MB").setTitle(gpu + ' Memory Usage')
+                      .setUnit("%").setTitle(gpu + ' VRAM Usage')
                       .setHeaderActions(new SceneDataLayerControls())
+                      .setDescription(gpuDesc)
 }
 
 

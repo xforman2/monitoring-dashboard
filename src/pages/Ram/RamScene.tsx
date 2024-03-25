@@ -1,19 +1,25 @@
 import { EmbeddedScene,    
   SceneDataTransformer,
-  SceneGridLayout,
-  SceneGridItem,
   SceneVariableSet,
   VariableValueSelectors,
   PanelBuilders,
   QueryVariable,
   VariableValueSingle,
   SceneQueryRunner,
+  SceneFlexLayout,
+  SceneFlexItem,
   
 } from '@grafana/scenes';
 
 import {  SQL_DATASOURCE_2 } from '../../constants';
 import { LegendDisplayMode, SortOrder, TooltipDisplayMode,  VisibilityMode } from '@grafana/schema';
+import { PanelMetaData } from '../SceneAppPageInitialization';
 
+const ramPanelMetaData: PanelMetaData = {
+  title: "RAM Utilization",
+  description: "This graph show user utilization of RAM",
+  unit: "%"
+}
 
 export const getRamScene = (serverId: VariableValueSingle) => {
   const ramUsers = users.clone()
@@ -22,16 +28,10 @@ export const getRamScene = (serverId: VariableValueSingle) => {
     $variables: new SceneVariableSet({
       variables: [ramUsers]
     }),
-    body: new SceneGridLayout({
-      isDraggable: true,
-      isLazy: true,
+    body: new SceneFlexLayout({
       children: [
-        new SceneGridItem({
-          x: 0,
-          y: 0,
-          width: 24,
-          height: 8,
-          body: getRamTimeseries(transformedData(ramQuery(serverId), 'PMEM')).build()
+        new SceneFlexItem({
+          body: getRamTimeseries(transformedData(ramQuery(serverId), 'PMEM'), ramPanelMetaData).build()
         }),
       ]
     }),
@@ -39,8 +39,14 @@ export const getRamScene = (serverId: VariableValueSingle) => {
   });
 }
 
-const getRamTimeseries = (data: SceneDataTransformer) => {
+
+const getRamTimeseries = (data: SceneDataTransformer, panelMetaData: PanelMetaData) => {
   return PanelBuilders.timeseries()
+  .setTitle(panelMetaData.title)
+  .setMin(panelMetaData.min)
+  .setMax(panelMetaData.max)
+  .setDescription(panelMetaData.description)
+  .setUnit(panelMetaData.unit)
   .setOption("legend", {
       showLegend: true,
       displayMode: LegendDisplayMode.Table,
@@ -60,6 +66,7 @@ const getRamTimeseries = (data: SceneDataTransformer) => {
 const users = new QueryVariable({
   name: 'user',
   label: 'User Name',
+  description: "Select one or multiple users",
   datasource: SQL_DATASOURCE_2,
   query: "SELECT login from User",
   sort: 1,
@@ -75,7 +82,7 @@ const ramQuery = (serverId: VariableValueSingle) => new SceneQueryRunner({
       datasource: SQL_DATASOURCE_2,
       refId: 'A',
       format: "time_series",
-      rawSql: `SELECT $__timeGroup(TimeCreated, '5m', 0) as time, ur.PMEM, u.login
+      rawSql: `SELECT $__timeGroup(TimeCreated, $__interval, 0) as time, ur.PMEM, u.login
       FROM UserRecord ur
       JOIN User u ON ur.UserID = u.ID
       WHERE  MachineId = '${serverId}' AND u.login IN ($user) AND $__timeFilter(TimeCreated) 

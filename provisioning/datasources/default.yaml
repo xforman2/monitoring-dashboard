@@ -14,19 +14,7 @@ datasources:
       maxIdleConns: 100
       MaxIdleConnsAuto: true
       connMaxLifetime: 14400
+      timeInterval: 5m
       timezone: +00:00
     secureJsonData:
       password: ${{ secrets.DB_PASS_1 }}
-  - name: server-monitoring
-    type: mysql
-    url: db.fi.muni.cz
-    user: xforman2
-    jsonData:
-      database: dbxforman2
-      maxOpenConns: 100
-      maxIdleConns: 100
-      MaxIdleConnsAuto: true
-      connMaxLifetime: 14400
-      timezone: +00:00
-    secureJsonData:
-      password: ${{ secrets.DB_PASS_2 }}

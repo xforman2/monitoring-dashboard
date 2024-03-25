@@ -1,22 +1,16 @@
-import React from 'react';
 import { getDriveScene } from './DriveScene';
-import { useSceneApp } from '@grafana/scenes';
 import { prefixRoute } from 'utils/Routing';
 import { ROUTES } from '../../constants';
-import { SceneMetaData, getAppScene } from 'utils/GlobalSceneObjects';
+import { PageMetaData, getAppPage } from '../SceneAppPageInitialization';
 
-const driveMetaData: SceneMetaData = {
+const driveMetaData: PageMetaData = {
   title: "Drive Dashboard",
   route: prefixRoute(`${ROUTES.Drive}`),
-  description: ""
+  description: "This dashboard shows users utilization of drives captured once a day"
 }
 
-const getDriveAppScene = () => {
-  return getAppScene( driveMetaData, getDriveScene)
+export const getDriveAppPage = () => {
+  return getAppPage( driveMetaData, getDriveScene)
 }
 
-export const DrivePluginPage = () => {
-  const scene = useSceneApp(getDriveAppScene)
 
-  return <scene.Component model={scene} />;
-};

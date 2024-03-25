@@ -1,23 +1,17 @@
-import React from 'react';
-import { useSceneApp } from '@grafana/scenes';
 import { getGpuScene } from './GpuScene';
-import { SceneMetaData, getAppScene } from 'utils/GlobalSceneObjects';
+import { PageMetaData, getAppPage } from '../SceneAppPageInitialization';
 import { prefixRoute } from 'utils/Routing';
 import { ROUTES } from '../../constants';
 
-const gpuMetaData: SceneMetaData = {
+const gpuMetaData: PageMetaData = {
   title: "GPU Dashboard",
   route: prefixRoute(`${ROUTES.Gpu}`),
-  description: ""
+  description: "This dashboard shows utilization of GPU"
 }
 
-const getGpuAppScene = () => {
-  return getAppScene( gpuMetaData, getGpuScene)
+export const getGpuAppPage = () => {
+  return getAppPage( gpuMetaData, getGpuScene)
 }
-export const GpuPluginPage = () => {
-  const scene = useSceneApp(getGpuAppScene);
 
-  return <scene.Component model={scene} />;
-};
 
 
