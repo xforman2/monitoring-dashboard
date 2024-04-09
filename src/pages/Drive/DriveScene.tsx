@@ -1,13 +1,13 @@
 import { EmbeddedScene,  
   SceneDataTransformer,
-  SceneGridLayout,
-  SceneGridItem,
   SceneVariableSet,
   VariableValueSelectors,
   PanelBuilders,
   QueryVariable,
   VariableValueSingle,
   SceneQueryRunner,
+  SceneFlexItem,
+  SceneFlexLayout,
   
 } from '@grafana/scenes';
 
@@ -19,14 +19,16 @@ const blocksPanelMetaData: PanelMetaData = {
   title: "Block Usage",
   description: "This timeline shows the amount of blocks utilized by a user.",
   unit: "",
-  max: 100000000
+  max: 100000000,
+  noValue: ""
 }
 
 const filesPanelMetaData: PanelMetaData = {
   title: "File Count",
   description: "This timeline shows the amount of user`s files.",
   unit: "",
-  max: 100000000
+  max: 100000000,
+  noValue: ""
 }
 
 const getDriveStatusHistory = (data: SceneDataTransformer, panelMetaData: PanelMetaData) => {
@@ -64,29 +66,19 @@ export function getDriveScene(serverId: VariableValueSingle) {
       variables: [driveUsers]
     }),
     body:
-     new SceneGridLayout({
-      isDraggable: true,
-      isLazy: true,
+    new SceneFlexLayout({
+      direction: "column",
       children: [
-
-          new SceneGridItem({
-            x: 0,
-            y: 0,
-            width: 24,
-            height: 14,
-            body: getDriveStatusHistory(transformedData(diskQuery(serverId), 'BlocksUsed'), blocksPanelMetaData)
-            .build()
-          }),
-          new SceneGridItem({
-            x:0,
-            y:14,
-            width: 24,
-            height: 14,
-            body: getDriveStatusHistory(transformedData(filesQuery(serverId), 'FilesUsed'), filesPanelMetaData)
-            .build()
-          }),
-        
-      ]
+        new SceneFlexItem({
+            minHeight: 500,
+            body: getDriveStatusHistory(transformedData(diskQuery(serverId), 'BlocksUsed'), blocksPanelMetaData).build()
+        }),
+        new SceneFlexItem({
+            
+            minHeight: 500,
+            body: getDriveStatusHistory(transformedData(filesQuery(serverId), 'FilesUsed'), filesPanelMetaData).build()
+        })
+      ]          
     }),
     controls: [new VariableValueSelectors({})],
   });

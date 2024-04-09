@@ -1,16 +1,18 @@
 import { getGpuScene } from './GpuScene';
-import { PageMetaData, getAppPage } from '../SceneAppPageInitialization';
+import { PageProps, getAppPage } from '../SceneAppPageInitialization';
 import { prefixRoute } from 'utils/Routing';
 import { ROUTES } from '../../constants';
+import { SceneTimeRange } from '@grafana/scenes';
 
-const gpuMetaData: PageMetaData = {
+const gpuProps: PageProps = {
   title: "GPU Dashboard",
   route: prefixRoute(`${ROUTES.Gpu}`),
-  description: "This dashboard shows utilization of GPU"
+  description: "This dashboard shows utilization of GPU",
+  timeRange: new SceneTimeRange({from: "now-6h"})
 }
 
 export const getGpuAppPage = () => {
-  return getAppPage( gpuMetaData, getGpuScene)
+  return getAppPage( gpuProps, getGpuScene)
 }
 
 

@@ -1,13 +1,13 @@
 import { EmbeddedScene,  
   SceneDataTransformer,
-  SceneGridLayout,
-  SceneGridItem,
   SceneVariableSet,
   VariableValueSelectors,
   PanelBuilders,
   QueryVariable,
   VariableValueSingle,
   SceneQueryRunner,
+  SceneFlexItem,
+  SceneFlexLayout,
 
 
 } from '@grafana/scenes';
@@ -24,62 +24,61 @@ export function getProcessDetailsScene(serverId: VariableValueSingle) {
     $variables: new SceneVariableSet({
       variables: [processUsers]
     }),
-    body: new SceneGridLayout({
-      isDraggable: true,
-      isLazy: true,
+    body: new SceneFlexLayout({
+      direction: "row",
       children: [
-        new SceneGridItem({
-          x: 0,
-          y: 0,
-          width: 12,
-          height: 8,
-          body: getProcessTimeseries(transformedData(pmemQuery(serverId), 'PMEM'), processPmemMetaData)
-            .build(),
-        }),
-        new SceneGridItem({
-          x: 12,
-          y: 0,
-          width: 12,
-          height: 8,
-          body: getProcessTimeseries(transformedData(pcpuQuery(serverId), 'PCPU'), processPcpuMetaData)
-            .build(),
-        }),
-        new SceneGridItem({
-          x: 0,
-          y: 8,
-          width: 12,
-          height: 8,
-          body: getProcessTimeseriesBars(transformedData(gpuCountQuery(serverId), 'GpuCount'), processGpuCountMetaData)
-            .build(),
-        }),
-        new SceneGridItem({
-          x: 12,
-          y: 8,
-          width: 12,
-          height: 8,
-          body: getProcessTimeseriesBars(transformedData(vramQuery(serverId), 'OverallGPUVram'), processgpuVramsMetaData)
-            .build(),
-        }),
-        new SceneGridItem({
-          x: 0,
-          y: 16,
-          width: 12,
-          height: 8,
-          body: getProcessTimeseriesBars(transformedData(nicenessQuery(serverId), 'Niceness'), processNicenessMetaData)
-            .build(),
-        }),
-        new SceneGridItem({
-          x: 12,
-          y: 16,
-          width: 12,
-          height: 8,
-          body: getProcessTimeseriesBars(transformedData(cpuTimeQuery(serverId), 'CPUTime'), processCpuTimeMetaData)
-            .build(),
-        }),
-        
-      ] 
-    }),  
-    controls: [new VariableValueSelectors({})],
+          new SceneFlexItem({
+              minWidth: 300,
+              minHeight: 300,
+              body: new SceneFlexLayout({
+                  direction: "column",
+                  children: [
+                      new SceneFlexItem({
+                          minWidth: 300,
+                          minHeight: 300,
+                          body: getProcessTimeseries(transformedData(pmemQuery(serverId), 'PMEM'), processPmemMetaData).build(),
+                      }),
+                      new SceneFlexItem({
+                          minWidth: 300,
+                          minHeight: 300,
+                          body: getProcessTimeseries(transformedData(pcpuQuery(serverId), 'PCPU'), processPcpuMetaData).build(),
+                      }),
+                      new SceneFlexItem({
+                          minWidth: 300,
+                          minHeight: 300,
+                          body: getProcessTimeseriesBars(transformedData(gpuCountQuery(serverId), 'GpuCount'), processGpuCountMetaData).build(),
+                      }),
+                  ]
+              })
+          }),
+          new SceneFlexItem({
+              minWidth: 300,
+              minHeight: 300,
+              body: new SceneFlexLayout({
+                  direction: "column",
+                  children: [
+                      new SceneFlexItem({
+                          minWidth: 300,
+                          minHeight: 300,
+                          body: getProcessTimeseriesBars(transformedData(vramQuery(serverId), 'OverallGPUVram'), processgpuVramsMetaData).build(),
+                      }),
+                      new SceneFlexItem({
+                          minWidth: 300,
+                          minHeight: 300,
+                          body: getProcessTimeseriesBars(transformedData(nicenessQuery(serverId), 'Niceness'), processNicenessMetaData).build(),
+                      }),
+                      new SceneFlexItem({
+                          minWidth: 300,
+                          minHeight: 300,
+                          body: getProcessTimeseriesBars(transformedData(cpuTimeQuery(serverId), 'CPUTime'), processCpuTimeMetaData).build(),
+                      }),
+                  ]
+              })
+          })
+      ]
+  }),
+  
+  controls: [new VariableValueSelectors({})],
   });
 }
 
@@ -100,10 +99,11 @@ const gpuCountQuery = (text: VariableValueSingle) => new SceneQueryRunner({
       datasource: SQL_DATASOURCE_2,
       refId: 'A',
       format: "time_series",
-      rawSql: `SELECT $__timeGroup(UserRecordTimeCreated, $__interval, 0) as time, Command, pe.GpuCount
+      rawSql: `SELECT $__timeGroup(UserRecordTimeCreated, $__interval, 0) as time, Command, AVG(pe.GpuCount) AS GpuCount
       FROM ProcessRecord pe
       JOIN User u ON Id = UserId
       WHERE MachineId = '${text}' AND login = '$userProcess' AND $__timeFilter(UserRecordTimeCreated) 
+      GROUP BY time, Command
       ORDER BY time`
   }],
 
@@ -115,10 +115,11 @@ const pcpuQuery = (text: VariableValueSingle) => new SceneQueryRunner({
       datasource: SQL_DATASOURCE_2,
       refId: 'A',
       format: "time_series",
-      rawSql: `SELECT $__timeGroup(UserRecordTimeCreated, $__interval, 0) as time, Command, pe.PCPU
+      rawSql: `SELECT $__timeGroup(UserRecordTimeCreated, $__interval, 0) as time, Command, AVG(pe.PCPU) as PCPU
       FROM ProcessRecord pe
       JOIN User u ON Id = UserId
       WHERE MachineId = '${text}' AND login = '$userProcess' AND $__timeFilter(UserRecordTimeCreated) 
+      GROUP BY time, Command
       ORDER BY time`
   }],
 
@@ -130,10 +131,11 @@ const pmemQuery = (text: VariableValueSingle) => new SceneQueryRunner({
       datasource: SQL_DATASOURCE_2,
       refId: 'A',
       format: "time_series",
-      rawSql: `SELECT $__timeGroup(UserRecordTimeCreated, $__interval, 0) as time, Command, pe.PMEM
+      rawSql: `SELECT $__timeGroup(UserRecordTimeCreated, $__interval, 0) as time, Command, AVG(pe.PMEM) as PMEM
       FROM ProcessRecord pe
       JOIN User u ON Id = UserId
       WHERE MachineId = '${text}' AND login = '$userProcess' AND $__timeFilter(UserRecordTimeCreated) 
+      GROUP BY time, Command
       ORDER BY time`
   }],
 
@@ -145,10 +147,11 @@ const nicenessQuery = (text: VariableValueSingle) => new SceneQueryRunner({
       datasource: SQL_DATASOURCE_2,
       refId: 'A',
       format: "time_series",
-      rawSql: `SELECT $__timeGroup(UserRecordTimeCreated, $__interval, 0) as time, Command, pe.Niceness
+      rawSql: `SELECT $__timeGroup(UserRecordTimeCreated, $__interval, 0) as time, Command, AVG(pe.Niceness) as Niceness
       FROM ProcessRecord pe
       JOIN User ON Id = UserId
       WHERE MachineId = '${text}' AND login = '$userProcess' AND $__timeFilter(UserRecordTimeCreated) 
+      GROUP BY time, Command
       ORDER BY time`
   }],
 
@@ -160,11 +163,12 @@ const vramQuery = (text: VariableValueSingle) => new SceneQueryRunner({
       datasource: SQL_DATASOURCE_2,
       refId: 'A',
       format: "time_series",
-      rawSql: `SELECT $__timeGroup(UserRecordTimeCreated, $__interval, 0) as time, Command, pe.OverallGPUVram
+      rawSql: `SELECT $__timeGroup(UserRecordTimeCreated, $__interval, 0) as time, Command, AVG(pe.OverallGPUVram) as OverallGPUVram
       FROM ProcessRecord pe
       JOIN User ON Id = UserId
       JOIN Machine m ON MachineId = m.ID
       WHERE MachineId = '${text}' AND login = '$userProcess' AND $__timeFilter(UserRecordTimeCreated) 
+      GROUP BY time, Command
       ORDER BY time`
   }],
 
@@ -176,11 +180,12 @@ const cpuTimeQuery = (text: VariableValueSingle) => new SceneQueryRunner({
       datasource: SQL_DATASOURCE_2,
       refId: 'A',
       format: "time_series",
-      rawSql: `SELECT $__timeGroup(UserRecordTimeCreated, $__interval, 0) as time, Command, TIME_TO_SEC(pe.CPUTime) as CPUTime
+      rawSql: `SELECT $__timeGroup(UserRecordTimeCreated, $__interval, 0) as time, Command, AVG(TIME_TO_SEC(pe.CPUTime)) as CPUTime
       FROM ProcessRecord pe
       JOIN User ON Id = UserId
       JOIN Machine m ON MachineId = m.ID
       WHERE MachineId = '${text}' AND login = '$userProcess' AND $__timeFilter(UserRecordTimeCreated) 
+      GROUP BY time, Command
       ORDER BY time`
   }],
 
@@ -216,7 +221,8 @@ const transformedData = (query: SceneQueryRunner, field: string) => new SceneDat
 const processCpuTimeMetaData: PanelMetaData = {
   title: "Cpu Time of process",
   description: "This graph shows Cpu Time of the processes of selected user that exceeds one of the thresholds in the description",
-  unit: "s"
+  unit: "s",
+  noValue: "Selected user has no high alert processes within selected time range"
 }
 
 const processNicenessMetaData: PanelMetaData = {
@@ -224,31 +230,37 @@ const processNicenessMetaData: PanelMetaData = {
   description: "This graph shows the niceness values of processes belonging to selected users that exceeds one of the thresholds in the description",
   unit: "",
   min: -20,
-  max: 20
+  max: 20,
+  noValue: "Selected user has no high alert processes within selected time range"
 }
 
 const processGpuCountMetaData: PanelMetaData = {
   title: "Number of GPUs occupied by process",
   description: "This graph shows the number of GPUs occupied by the processes of selected user that exceeds one of the thresholds in the description",
-  unit: ""
+  unit: "",
+  noValue: "Selected user has no high alert processes within selected time range"
 }
 
 const processgpuVramsMetaData: PanelMetaData = {
   title: "GPU VRAM used by a process",
   description: "This graph shows Overall GPU VRAM used by the processes of selected user that exceeds one of the thresholds in the description",
-  unit: "GB"
+  unit: "GB",
+  noValue: "Selected user has no high alert processes within selected time range"
 }
 
 const processPcpuMetaData: PanelMetaData = {
   title: "CPU Utilization",
   description: "This graph shows CPU utilization of processes of selected user that exceeds one of the thresholds in the description",
-  unit: "%"
+  unit: "%",
+  noValue: "Selected user has no high alert processes within selected time range"
+
 }
 
 const processPmemMetaData: PanelMetaData = {
   title: "RAM Utilization",
   description: "This graph shows RAM utilization of processes of selected user that exceeds one of the thresholds in the description",
-  unit: "%"
+  unit: "%",
+  noValue: "Selected user has no high alert processes within selected time range"
 }
 
 const getProcessTimeseries = (data: SceneDataTransformer, panelMetaData: PanelMetaData) => {
@@ -258,6 +270,7 @@ const getProcessTimeseries = (data: SceneDataTransformer, panelMetaData: PanelMe
   .setMax(panelMetaData.max)
   .setDescription(panelMetaData.description)
   .setUnit(panelMetaData.unit)
+  .setNoValue(panelMetaData.noValue)
   .setOption("legend", {
       showLegend: true,
       displayMode: LegendDisplayMode.Table,
@@ -270,6 +283,7 @@ const getProcessTimeseries = (data: SceneDataTransformer, panelMetaData: PanelMe
     sort: SortOrder.Descending
   })
   .setCustomFieldConfig('showPoints', VisibilityMode.Never)
+  .setDecimals(2)
   .setData(data)
 }
 
@@ -280,3 +294,5 @@ const getProcessTimeseriesBars = (data: SceneDataTransformer, panelMetaData: Pan
   .setCustomFieldConfig('stacking',{mode: StackingMode.Normal})
   
 }
+
+

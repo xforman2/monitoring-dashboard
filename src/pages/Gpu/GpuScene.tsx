@@ -118,12 +118,37 @@ const gpuMemoryUsage = (serverId: VariableValueSingle, gpu: VariableValueSingle)
       
       refId: 'A',
       format: "time_series",
-      rawSql: `SELECT $__timeGroup(RecordTimeCreated, $__interval, 0) as time, gr.MemoryUsage / g.AvailableMemoryMB * 100 as MemoryUsage, u.login
-      FROM GpuReceipt gr 
-      JOIN Gpu g ON g.ID = gr.GpuID
-      JOIN User u ON u.ID = gr.UserID 
-      WHERE MachineId = '${serverId}' AND u.login IN ($userGpu) AND g.Id = '${gpu}' AND $__timeFilter(RecordTimeCreated)
-      ORDER BY time`,
+
+      
+      rawSql: ` SELECT 
+                    $__timeGroup(TimeCreated, $__interval, 0) AS time,
+                    AVG(MemoryUsage) as MemoryUsage,
+                    Login 
+                FROM 
+                    (
+                        SELECT 
+                            u.Login,
+                            IFNULL(MemoryUsage, 0) AS MemoryUsage,
+                            IFNULL(RecordTimeCreated, FROM_UNIXTIME($__unixEpochFrom())) AS TimeCreated
+                        FROM 
+                            User u
+                        LEFT JOIN (
+                            SELECT  
+                                UserId,
+                                (MemoryUsage / AvailableMemoryMB) * 100 as MemoryUsage,
+                                RecordTimeCreated
+                            FROM   
+                              GpuReceipt gr
+                            JOIN Gpu g ON g.ID = gr.GpuID
+                            WHERE 
+                                $__timeFilter(RecordTimeCreated) AND MachineId = ${serverId} AND GpuId = ${gpu}
+                        ) gr ON u.Id = gr.UserId
+                    ) res 
+                WHERE Login IN ($userGpu)
+                GROUP BY time, Login
+                ORDER BY 
+                    time
+      `,
     }]
   })
 
@@ -137,6 +162,19 @@ const transformedData = (queryRunner: SceneQueryRunner) => new SceneDataTransfor
         renamePattern: '$1',
       },
     },
+    {
+      id: "convertFieldType",
+      options: {
+          conversions: [
+          {
+              destinationType: "number",
+              targetField: `MemoryUsage`
+          }
+          ],
+          fields: {}
+      }
+      
+    }
   ],
 });
 
@@ -155,7 +193,8 @@ const annotations = (gpu: VariableValueSingle) => new dataLayers.AnnotationsData
       // @ts-ignore
       rawSql: `SELECT r.Id, UserID, Start, End, Login
              FROM Reservation r JOIN User u ON UserID = u.Id 
-             WHERE login IN ($userGpu) AND GpuId = '${gpu}'`
+             WHERE login IN ($userGpu) AND GpuId = '${gpu}' AND ($__timeFilter(Start) OR $__timeFilter(End))
+             `
       
     },
     mappings: {
@@ -194,13 +233,16 @@ const getGpuTimeseries = (gpu: VariableValueSingle) => {
                           calcs: ["mean"],
                         })
                       .setOption("tooltip", {
-                        mode: TooltipDisplayMode.Multi,
+                        mode: TooltipDisplayMode.Single,
                         sort: SortOrder.Descending
                       })
                       .setCustomFieldConfig('showPoints', VisibilityMode.Never)
                       .setUnit("%").setTitle(gpu + ' VRAM Usage')
                       .setHeaderActions(new SceneDataLayerControls())
                       .setDescription(gpuDesc)
+                      .setMax(100)
+                      .setDecimals(2)
+                      .setNoValue("Selected users have no usage recorded on this GPU within the selected time range.")
 }
 
 

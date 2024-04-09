@@ -1,13 +1,14 @@
-import { EmbeddedScene, QueryVariable, SceneAppPage, SceneRefreshPicker, SceneTimePicker, SceneVariableSet, VariableValueSingle, behaviors } from "@grafana/scenes";
+import { EmbeddedScene, QueryVariable, SceneAppPage, SceneRefreshPicker, SceneTimePicker, SceneTimeRange, SceneVariableSet, VariableValueSingle, behaviors } from "@grafana/scenes";
 import { DashboardCursorSync, VariableHide } from "@grafana/schema";
 import { SQL_DATASOURCE_2 } from "../constants";
 import { getLoadingPage } from "./LoadingFallbackPage";
 import { ReactNode } from "react";
 
-export interface PageMetaData {
+export interface PageProps {
     title: string,
     description: string | ReactNode,
     route: string
+    timeRange: SceneTimeRange
 }
 
 export interface PanelMetaData{
@@ -16,6 +17,7 @@ export interface PanelMetaData{
     unit: string
     min?: number
     max?: number
+    noValue: string
 
 }
 
@@ -35,21 +37,22 @@ export const servers = new QueryVariable({
   
 });
 
-export const getAppPage = (pageMetaData: PageMetaData, getScene: GetSceneFunction) => {
+export const getAppPage = (pageProps: PageProps, getScene: GetSceneFunction) => {
     const appServers = servers.clone()
     const page = new SceneAppPage({
+        $timeRange: pageProps.timeRange,
         $behaviors: [new behaviors.CursorSync({
         sync: DashboardCursorSync.Crosshair
         })],
         $variables: new SceneVariableSet({
         variables: [appServers]
         }),
-        title: pageMetaData.title,
-        subTitle: pageMetaData.description,
+        title: pageProps.title,
+        subTitle: pageProps.description,
         
         controls: [new SceneTimePicker({ isOnCanvas: true }),
-                    new SceneRefreshPicker({})],
-        url: pageMetaData.route,
+                    new SceneRefreshPicker({refresh: "5m"})],
+        url: pageProps.route,
         hideFromBreadcrumbs: false,
         tabs: [],
         getFallbackPage: getLoadingPage
@@ -61,7 +64,7 @@ export const getAppPage = (pageMetaData: PageMetaData, getScene: GetSceneFunctio
             page.setState({
             
             tabs: state.options.map((option) => {
-                return getTab(pageMetaData.route, option.label, option.value, getScene) 
+                return getTab(pageProps.route, option.label, option.value, getScene) 
             })
             })
         }

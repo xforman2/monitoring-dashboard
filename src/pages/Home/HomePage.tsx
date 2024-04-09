@@ -1,5 +1,5 @@
 import { SceneAppPage } from '@grafana/scenes';
-import { getHomeScene } from './scenes';
+import { getHomeScene } from './HomeScene';
 import { prefixRoute } from '../../utils/Routing';
 import { ROUTES } from '../../constants';
 

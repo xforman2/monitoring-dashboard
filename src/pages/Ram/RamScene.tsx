@@ -18,7 +18,9 @@ import { PanelMetaData } from '../SceneAppPageInitialization';
 const ramPanelMetaData: PanelMetaData = {
   title: "RAM Utilization",
   description: "This graph show user utilization of RAM",
-  unit: "%"
+  unit: "%",
+  noValue: "Selected users have no RAM usage recorded within selected time range",
+  max: 100
 }
 
 export const getRamScene = (serverId: VariableValueSingle) => {
@@ -54,17 +56,19 @@ const getRamTimeseries = (data: SceneDataTransformer, panelMetaData: PanelMetaDa
       calcs: ["mean"],
     })
   .setOption("tooltip", {
-    mode: TooltipDisplayMode.Multi,
+    mode: TooltipDisplayMode.Single,
     sort: SortOrder.Descending
   })
+  .setNoValue(panelMetaData.noValue)
   .setCustomFieldConfig('showPoints', VisibilityMode.Never)
-  .setData(data).setTitle("RAM %").setUnit("%")
+  .setDecimals(2)
+  .setData(data)
                           
 }
 
 
 const users = new QueryVariable({
-  name: 'user',
+  name: 'userRam',
   label: 'User Name',
   description: "Select one or multiple users",
   datasource: SQL_DATASOURCE_2,
@@ -82,11 +86,36 @@ const ramQuery = (serverId: VariableValueSingle) => new SceneQueryRunner({
       datasource: SQL_DATASOURCE_2,
       refId: 'A',
       format: "time_series",
-      rawSql: `SELECT $__timeGroup(TimeCreated, $__interval, 0) as time, ur.PMEM, u.login
-      FROM UserRecord ur
-      JOIN User u ON ur.UserID = u.ID
-      WHERE  MachineId = '${serverId}' AND u.login IN ($user) AND $__timeFilter(TimeCreated) 
-      ORDER BY time`
+
+      rawSql: 
+      ` SELECT 
+                    $__timeGroup(TimeCreated, $__interval, 0) AS time,
+                    AVG(PMEM) as PMEM,
+                    Login 
+                FROM 
+                    (
+                        SELECT 
+                            u.Login,
+                            IFNULL(PMEM, 0) AS PMEM,
+                            IFNULL(TimeCreated, FROM_UNIXTIME($__unixEpochFrom())) AS TimeCreated
+                        FROM 
+                            User u
+                        LEFT JOIN (
+                            SELECT  
+                                UserId,
+                                PMEM,
+                                TimeCreated
+                            FROM   
+                                UserRecord
+                            WHERE 
+                                $__timeFilter(TimeCreated) AND MachineId = ${serverId}
+                        ) ur ON u.Id = ur.UserId
+                    ) res 
+                WHERE Login IN ($userRam)
+                GROUP BY time, Login
+                ORDER BY 
+                    time;
+                `
   }],
 
 });

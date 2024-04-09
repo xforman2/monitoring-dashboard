@@ -19,7 +19,7 @@ const users = new QueryVariable({
   label: 'User Name',
   description: "Select one or multiple users",
   datasource: SQL_DATASOURCE_2,
-  query: "SELECT login from User",
+  query: "SELECT Login from User",
   sort: 5,
   isMulti: true,
   includeAll: true,
@@ -44,13 +44,13 @@ export const getCpuScene = (serverId: VariableValueSingle) => {
             new SceneFlexItem({
             minWidth: 300, 
             minHeight: 300,
-            body: getCpuTimeseries(transformedData(pcpuQuery(serverId), 'PCPU'), cpuUsageMetaData)
+            body: getCpuTimeseries(transformedData(serverId, "PCPU"), cpuUsageMetaData)
                   .build()
             }),
             new SceneFlexItem({
               minWidth: 300, 
               minHeight: 300,
-              body: getCpuTimeseriesBars(transformedData(highCpuTimeQuery(serverId), 'HighCpuTime'), highCpuTimeMetaData)
+              body: getCpuTimeseriesBars(transformedData(serverId, "HighCpuTime"), highCpuTimeMetaData)
                     .build()
                   
             }),
@@ -63,13 +63,13 @@ export const getCpuScene = (serverId: VariableValueSingle) => {
               new SceneFlexItem({
                 minWidth: 300, 
                 minHeight: 300,
-                body: getCpuTimeseriesBars(transformedData(processCountQuery(serverId), 'ProcessCount'), processCountMetaData)
+                body: getCpuTimeseriesBars(transformedData(serverId, "ProcessCount"), processCountMetaData)
                       .build()
               }),
               new SceneFlexItem({
                 minWidth: 300, 
                 minHeight: 300,
-                body: getCpuTimeseriesBars(transformedData(sleepingProcessesQuery(serverId), 'IOSleeping'), ioSleepingMetaData)
+                body: getCpuTimeseriesBars(transformedData(serverId, "IOSleeping"), ioSleepingMetaData)
                       .build()
               }),
           
@@ -89,6 +89,7 @@ const getCpuTimeseries = (data: SceneDataTransformer, panelMetaData: PanelMetaDa
   .setMax(panelMetaData.max)
   .setDescription(panelMetaData.description)
   .setUnit(panelMetaData.unit)
+  .setNoValue(panelMetaData.noValue)
   .setOption("legend", {
       showLegend: true,
       displayMode: LegendDisplayMode.Table,
@@ -96,35 +97,42 @@ const getCpuTimeseries = (data: SceneDataTransformer, panelMetaData: PanelMetaDa
       calcs: ["mean"],
     })
   .setOption("tooltip", {
-    mode: TooltipDisplayMode.Multi,
+    mode: TooltipDisplayMode.Single,
     sort: SortOrder.Descending
   })
+  
   .setCustomFieldConfig('showPoints', VisibilityMode.Never)
+  .setDecimals(2)
   .setData(data)
 }
 
 const cpuUsageMetaData: PanelMetaData = {
   title: "CPU Utilization",
   description: "This graph show user utilization of CPU, one core equals 100%. The value can be over a 100",
-  unit: "%"
+  unit: "%",
+  noValue: "Selected users have no CPU Utilization recorded within selected time range"
+  
 }
 
 const highCpuTimeMetaData: PanelMetaData = {
   title: "High Cpu Time Count",
   description: "This graph shows us number of user processes that are classified as High Cpu Time",
-  unit: ""
+  unit: "",
+  noValue: "Selected users have no High Cpu Time processes recorded within selected time range"
 }
 
 const processCountMetaData: PanelMetaData = {
   title: "Process Count",
   description: "This graph shows amout of processes belonging to selected users",
-  unit: ""
+  unit: "",
+  noValue: "Selected users have no processes withing selected time range"
 }
 
 const ioSleepingMetaData: PanelMetaData = {
   title: "Sleeping Process Count  ",
   description: "This graph shows amount of user processes in sleeping state",
-  unit: ""
+  unit: "",
+  noValue: "Selected users have no sleeping processes withing selected time range"
 }
 
 const getCpuTimeseriesBars = (data: SceneDataTransformer, panelMetaData: PanelMetaData) => {
@@ -135,70 +143,47 @@ const getCpuTimeseriesBars = (data: SceneDataTransformer, panelMetaData: PanelMe
   
 }
 
-const pcpuQuery = (text: VariableValueSingle) => new SceneQueryRunner({
+const cpuQuery = (serverId: VariableValueSingle, field: string) => new SceneQueryRunner({
   queries: 
   [{
       datasource: SQL_DATASOURCE_2,
       refId: 'A',
       format: "time_series",
-      rawSql: `SELECT $__timeGroup(TimeCreated, $__interval, 0) as time, ur.PCPU, u.login
-      FROM UserRecord ur
-      JOIN User u ON ur.UserID = u.ID
-      WHERE  MachineId = '${text}' AND u.login IN ($userCpu) AND $__timeFilter(TimeCreated) 
-      ORDER BY time`
+      rawSql: ` SELECT 
+                    $__timeGroup(TimeCreated, $__interval, 0) AS time,
+                    AVG(${field}) as ${field},
+                    Login 
+                FROM 
+                    (
+                        SELECT 
+                            u.Login,
+                            IFNULL(${field}, 0) AS ${field},
+                            IFNULL(TimeCreated, FROM_UNIXTIME($__unixEpochFrom())) AS TimeCreated
+                        FROM 
+                            User u
+                        LEFT JOIN (
+                            SELECT  
+                                UserId,
+                                ${field},
+                                TimeCreated
+                            FROM   
+                                UserRecord
+                            WHERE 
+                                $__timeFilter(TimeCreated) AND MachineId = ${serverId}
+                        ) ur ON u.Id = ur.UserId
+                    ) res 
+                WHERE Login IN ($userCpu)
+                GROUP BY time, Login
+                ORDER BY 
+                    time
+                `
   }],
 
 });
 
 
-const highCpuTimeQuery = (text: VariableValueSingle) => new SceneQueryRunner({
-  queries: 
-  [{
-      datasource: SQL_DATASOURCE_2,
-      refId: 'A',
-      format: "time_series",
-      rawSql: `SELECT $__timeGroup(TimeCreated, $__interval, 0) as time, ur.HighCpuTime, u.login
-      FROM UserRecord ur
-      JOIN User u ON ur.UserID = u.ID
-      WHERE  MachineId = '${text}' AND u.login IN ($userCpu) AND $__timeFilter(TimeCreated) 
-      ORDER BY time`
-  }],
-
-});
-
-const processCountQuery = (text: VariableValueSingle) => new SceneQueryRunner({
-  queries: 
-  [{
-      datasource: SQL_DATASOURCE_2,
-      refId: 'A',
-      format: "time_series",
-      rawSql: `SELECT $__timeGroup(TimeCreated, $__interval, 0) as time, ur.ProcessCount, u.login
-      FROM UserRecord ur
-      JOIN User u ON ur.UserID = u.ID
-      WHERE  MachineId = '${text}' AND u.login IN ($userCpu) AND $__timeFilter(TimeCreated) 
-      ORDER BY time`
-  }],
-
-});
-
-const sleepingProcessesQuery = (text: VariableValueSingle) => new SceneQueryRunner({
-  queries: 
-  [{
-      datasource: SQL_DATASOURCE_2,
-      refId: 'A',
-      format: "time_series",
-      rawSql: `SELECT $__timeGroup(TimeCreated, $__interval, 0) as time, ur.IOSleeping, u.login
-      FROM UserRecord ur
-      JOIN User u ON ur.UserID = u.ID
-      WHERE  MachineId = '${text}' AND u.login IN ($userCpu) AND $__timeFilter(TimeCreated) 
-      ORDER BY time`
-  }],
-
-});
-
-
-const transformedData = (query: SceneQueryRunner, field: string) => new SceneDataTransformer({
-  $data: query,
+const transformedData = (serverId: VariableValueSingle,  field: string) => new SceneDataTransformer({
+  $data: cpuQuery(serverId,field),
   transformations: [
       {
       id: 'renameByRegex',

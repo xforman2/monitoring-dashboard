@@ -1,10 +1,11 @@
 import { getProcessDetailsScene } from './ProcessDetailsScene';
-import { PageMetaData, getAppPage } from '../SceneAppPageInitialization';
+import { PageProps, getAppPage } from '../SceneAppPageInitialization';
 import { prefixRoute } from 'utils/Routing';
 import { ROUTES } from '../../constants';
 import React from 'react';
+import { SceneTimeRange } from '@grafana/scenes';
 
-const processMetaData: PageMetaData = {
+const processProps: PageProps = {
   title: "Process Details Dashboard",
   route: prefixRoute(`${ROUTES.ProcessDetails}`),
   description: <div>
@@ -14,10 +15,11 @@ const processMetaData: PageMetaData = {
                   <li>CPU Time of the process &gt; 1 hour</li>
                   <li>Number or GPUs utilized by the process &gt; 0</li>
                 </ul>
-              </div>
+              </div>,
+  timeRange: new SceneTimeRange({from: "now-6h"})
 
 }
 
 export const getProcessDetailsAppPage = () => {
-  return getAppPage( processMetaData, getProcessDetailsScene);
+  return getAppPage( processProps, getProcessDetailsScene);
 }
