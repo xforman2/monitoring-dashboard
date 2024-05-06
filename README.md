@@ -1,6 +1,6 @@
 # Grafana Server Monitoring Plugin
 
-In modern computational environments, optimizing resource usage is crucial. The goal of this project is to implement a data visualization tool that enhances the efficiency and effectiveness of server resource management.
+In modern computational environments, optimizing resource usage is crucial. This data visualization tool enhances the efficiency and effectiveness of server resource management.
 
 ## Overview
 
