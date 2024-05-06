@@ -17,23 +17,22 @@ import { EmbeddedScene,
 
 import { SQL_DATASOURCE_2 } from '../../constants';
 import { LegendDisplayMode, SortOrder, TooltipDisplayMode, VisibilityMode} from '@grafana/schema';
-import { SceneRadioToggle } from 'utils/SceneRadioToggle';
-import { ShowBasedOnConditionBehavior } from 'utils/ShowBasedOnConditionBehavior';
 import { AnnotationEventFieldSource } from '@grafana/data';
 
 
-const users = new QueryVariable({
-  name: 'userGpu',
+const users = (serverId: VariableValueSingle, server: string) => new QueryVariable({
+  name: `userGpu${server}`,
   label: 'User Name',
   description: "Select one or multiple users",
   datasource: SQL_DATASOURCE_2,
-  query: "SELECT login from User",
+  query: `SELECT Login from User u
+          JOIN UserHasUsed us ON u.Id = us.UserId
+          WHERE MachineId = ${serverId}`,
   sort: 5,
   isMulti: true,
   includeAll: true,
   maxVisibleValues: 2,
   defaultToAll: true
-
 });
 
 export const getGpuScene = (serverId: VariableValueSingle, server: string): EmbeddedScene =>  {
@@ -49,7 +48,7 @@ export const getGpuScene = (serverId: VariableValueSingle, server: string): Embe
     defaultToAll: true
   });
 
-  const gpuUsers = users.clone()
+  const gpuUsers = users(serverId, server).clone()
 
   const variableSet = new SceneVariableSet({
     variables: [gpuUsers, gpus],
@@ -66,23 +65,12 @@ export const getGpuScene = (serverId: VariableValueSingle, server: string): Embe
       getLayoutChild: (option) => {
         return new SceneFlexLayout({
           $data: new SceneDataLayerSet({
-            layers: [annotations(option.value)]
+            layers: [annotations(option.value, server)]
           }),
           children: [
             new SceneFlexItem({
-              $data: transformedData(gpuMemoryUsage(serverId, option.value)),
-              $behaviors: [
-                new ShowBasedOnConditionBehavior({
-                  references: ["toggle"],
-                  condition: (toggle: SceneRadioToggle) => {
-                    return toggle.state.value === "visible" 
-                  }
-                }),
-                
-              ],
-
-              minHeight: 250,
-              
+              $data: transformedData(gpuMemoryUsage(serverId, server, option.value)),
+              minHeight: 250,    
               body: getGpuTimeseries(option.label)
                     .build(),
             })
@@ -96,14 +84,6 @@ export const getGpuScene = (serverId: VariableValueSingle, server: string): Embe
     controls: [
               new VariableValueSelectors({}),
               new SceneDataLayerControls(),
-              new SceneRadioToggle({
-                key: "toggle",
-                options: [
-                  { value: 'visible', label: 'Show no data panels' },
-                  { value: 'hidden', label: 'Hide no data panels' },
-                ],
-                value: 'visible',
-              }),
               ],
               
   })
@@ -111,7 +91,7 @@ export const getGpuScene = (serverId: VariableValueSingle, server: string): Embe
   return scene;
 }
 
-const gpuMemoryUsage = (serverId: VariableValueSingle, gpu: VariableValueSingle) => new SceneQueryRunner({
+const gpuMemoryUsage = (serverId: VariableValueSingle, server: string, gpu: VariableValueSingle) => new SceneQueryRunner({
     queries: 
     [{
       datasource: SQL_DATASOURCE_2,
@@ -144,7 +124,7 @@ const gpuMemoryUsage = (serverId: VariableValueSingle, gpu: VariableValueSingle)
                                 $__timeFilter(RecordTimeCreated) AND MachineId = ${serverId} AND GpuId = ${gpu}
                         ) gr ON u.Id = gr.UserId
                     ) res 
-                WHERE Login IN ($userGpu)
+                WHERE Login IN ($userGpu${server})
                 GROUP BY time, Login
                 ORDER BY 
                     time
@@ -178,7 +158,7 @@ const transformedData = (queryRunner: SceneQueryRunner) => new SceneDataTransfor
   ],
 });
 
-const annotations = (gpu: VariableValueSingle) => new dataLayers.AnnotationsDataLayer({
+const annotations = (gpu: VariableValueSingle, server: string) => new dataLayers.AnnotationsDataLayer({
   name: `Reservation`,
   description: "Show reservation of users on this GPU",
   query: {
@@ -191,9 +171,11 @@ const annotations = (gpu: VariableValueSingle) => new dataLayers.AnnotationsData
       // @ts-ignore
       format: 'table',
       // @ts-ignore
-      rawSql: `SELECT r.Id, UserID, Start, End, Login
+      rawSql: `SELECT r.Id, Description, Start, End, Login
              FROM Reservation r JOIN User u ON UserID = u.Id 
-             WHERE login IN ($userGpu) AND GpuId = '${gpu}' AND ($__timeFilter(Start) OR $__timeFilter(End))
+             WHERE login IN ($userGpu${server}) 
+             AND GpuId = '${gpu}' 
+             AND ($__timeFilter(Start) OR $__timeFilter(End) OR ($__timeTo() BETWEEN Start AND End))
              `
       
     },
@@ -203,8 +185,8 @@ const annotations = (gpu: VariableValueSingle) => new dataLayers.AnnotationsData
         value: "Id"
       },
       text: {
-        source: AnnotationEventFieldSource.Text,
-        value: "reserved this gpu"
+        source: AnnotationEventFieldSource.Field,
+        value: "Description"
       },
       time: {
         source: AnnotationEventFieldSource.Field,
@@ -231,6 +213,9 @@ const getGpuTimeseries = (gpu: VariableValueSingle) => {
                           displayMode: LegendDisplayMode.Table,
                           placement: "right",
                           calcs: ["mean"],
+                          sortBy: "Mean",
+                          sortDesc: true
+                          
                         })
                       .setOption("tooltip", {
                         mode: TooltipDisplayMode.Single,

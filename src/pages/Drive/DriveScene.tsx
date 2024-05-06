@@ -16,18 +16,20 @@ import { ThresholdsMode, TooltipDisplayMode, VisibilityMode} from '@grafana/sche
 import { PanelMetaData } from '../SceneAppPageInitialization';
 
 const blocksPanelMetaData: PanelMetaData = {
-  title: "Block Usage",
-  description: "This timeline shows the amount of blocks utilized by a user.",
-  unit: "",
-  max: 100000000,
+  title: "Drive Space Utilizaition (%)",
+  description: "This timeline shows the amount of space utilized by a user.",
+  unit: "%",
+  min: 0,
+  max: 100,
   noValue: ""
 }
 
 const filesPanelMetaData: PanelMetaData = {
-  title: "File Count",
-  description: "This timeline shows the amount of user`s files.",
+  title: "File Count (%)",
+  description: "This timeline shows the amount of user files.",
   unit: "",
-  max: 100000000,
+  max: 100,
+  min: 0,
   noValue: ""
 }
 
@@ -37,7 +39,8 @@ const getDriveStatusHistory = (data: SceneDataTransformer, panelMetaData: PanelM
   .setDescription(panelMetaData.description)
   .setUnit(panelMetaData.unit)  
   .setOption("tooltip", {
-    mode: TooltipDisplayMode.Single,
+    mode: TooltipDisplayMode.Multi,
+    
   })
   .setMin(panelMetaData.min)
   .setMax(panelMetaData.max)
@@ -45,21 +48,22 @@ const getDriveStatusHistory = (data: SceneDataTransformer, panelMetaData: PanelM
   .setThresholds({
     mode: ThresholdsMode.Percentage,
     steps: [ 
-              {"value": 20, "color": "#73BF69"},
-              {"value": 40, "color": "#FADE2A"},
-              {"value": 60, "color": "#FF9820"},
-              {"value": 80, "color": "#F2495C"}
+              {"value": 0, "color": "#73BF69"},
+              {"value": 10, "color": "#FADE2A"},
+              {"value": 30, "color": "#FF9820"},
+              {"value": 50, "color": "#F2495C"}
             ]
   })
   .setOption("showValue", VisibilityMode.Never)
+  .setDecimals(2)
   .setData(data)
                           
 }
 
 
-export function getDriveScene(serverId: VariableValueSingle) {
+export function getDriveScene(serverId: VariableValueSingle, server: string) {
   
-  const driveUsers = users.clone();
+  const driveUsers = users(serverId, server).clone();
 
   return new EmbeddedScene({
     $variables: new SceneVariableSet({
@@ -71,12 +75,12 @@ export function getDriveScene(serverId: VariableValueSingle) {
       children: [
         new SceneFlexItem({
             minHeight: 500,
-            body: getDriveStatusHistory(transformedData(diskQuery(serverId), 'BlocksUsed'), blocksPanelMetaData).build()
+            body: getDriveStatusHistory(transformedData(diskQuery(serverId, server), 'DiskSpaceUsed'), blocksPanelMetaData).build()
         }),
         new SceneFlexItem({
             
             minHeight: 500,
-            body: getDriveStatusHistory(transformedData(filesQuery(serverId), 'FilesUsed'), filesPanelMetaData).build()
+            body: getDriveStatusHistory(transformedData(filesQuery(serverId, server), 'FilesUsed'), filesPanelMetaData).build()
         })
       ]          
     }),
@@ -84,12 +88,14 @@ export function getDriveScene(serverId: VariableValueSingle) {
   });
 }
 
-const users = new QueryVariable({
-  name: 'userDrive',
+const users = (serverId: VariableValueSingle, server: string) => new QueryVariable({
+  name: `userDrive${server}`,
   label: 'User Name',
   description: "Select one or multiple users",
   datasource: SQL_DATASOURCE_2,
-  query: "SELECT login from User",
+  query: `SELECT Login from User u
+          JOIN UserHasUsed us ON u.Id = us.UserId
+          WHERE MachineId = ${serverId}`,
   sort: 5,
   isMulti: true,
   includeAll: true,
@@ -97,31 +103,33 @@ const users = new QueryVariable({
   maxVisibleValues: 2
 });
 
-const diskQuery = (text: VariableValueSingle) => new SceneQueryRunner({
+const diskQuery = (serverId: VariableValueSingle, server: string) => new SceneQueryRunner({
   queries: 
   [{
       datasource: SQL_DATASOURCE_2,
       refId: 'A',
       format: "time_series",
-      rawSql: `SELECT TimeCreated as time, Login, BlocksUsed
+      rawSql: `SELECT TimeCreated as time, Login, (DiskSpaceUsed / DiskLimit) * 100 As DiskSpaceUsed
       FROM UserDiskRecord dr
       JOIN User u ON UserId = u.Id
-      WHERE BlocksUsed IS NOT NULL AND MachineId = '${text}' AND Login IN ($userDrive) AND $__timeFilter(TimeCreated) 
+      JOIN Machine m ON MachineId = m.Id
+      WHERE DiskSpaceUsed IS NOT NULL AND MachineId = '${serverId}' AND Login IN ($userDrive${server}) AND $__timeFilter(TimeCreated) 
       ORDER BY time`
   }],
 
 });
 
-const filesQuery = (text: VariableValueSingle) => new SceneQueryRunner({
+const filesQuery = (serverId: VariableValueSingle, server: string) => new SceneQueryRunner({
     queries: 
     [{
         datasource: SQL_DATASOURCE_2,
         refId: 'A',
         format: "time_series",
-          rawSql: `SELECT TimeCreated as time, Login, FilesUsed
+          rawSql: `SELECT TimeCreated as time, Login, (FilesUsed / FileLimit) * 100 As FilesUsed
           FROM UserDiskRecord dr
           JOIN User u ON UserId = u.Id
-          WHERE FilesUsed IS NOT NULL AND MachineId = '${text}' AND Login  IN ($userDrive) AND $__timeFilter(TimeCreated) 
+          JOIN Machine m ON MachineId = m.Id
+          WHERE FilesUsed IS NOT NULL AND MachineId = '${serverId}' AND Login  IN ($userDrive${server}) AND $__timeFilter(TimeCreated) 
           ORDER BY time`
     }],
 

@@ -14,12 +14,14 @@ import { SQL_DATASOURCE_2 } from '../../constants';
 import { GraphDrawStyle, LegendDisplayMode, SortOrder,StackingMode,TooltipDisplayMode, VisibilityMode } from '@grafana/schema';
 import { PanelMetaData } from '../SceneAppPageInitialization';
 
-const users = new QueryVariable({
-  name: 'userCpu',
+const users = (serverId: VariableValueSingle, server: string) => new QueryVariable({
+  name: `userCpu${server}`,
   label: 'User Name',
   description: "Select one or multiple users",
   datasource: SQL_DATASOURCE_2,
-  query: "SELECT Login from User",
+  query: `SELECT Login from User u
+          JOIN UserHasUsed us ON u.Id = us.UserId
+          WHERE MachineId = ${serverId}`,
   sort: 5,
   isMulti: true,
   includeAll: true,
@@ -27,10 +29,10 @@ const users = new QueryVariable({
   maxVisibleValues: 2
 });
 
-export const getCpuScene = (serverId: VariableValueSingle) => {
+export const getCpuScene = (serverId: VariableValueSingle, server: string) => {
   
   
-  const cpuUsers = users.clone()
+  const cpuUsers = users(serverId, server).clone()
   return new EmbeddedScene({
     $variables: new SceneVariableSet({
       variables: [cpuUsers]
@@ -44,13 +46,13 @@ export const getCpuScene = (serverId: VariableValueSingle) => {
             new SceneFlexItem({
             minWidth: 300, 
             minHeight: 300,
-            body: getCpuTimeseries(transformedData(serverId, "PCPU"), cpuUsageMetaData)
+            body: getCpuTimeseries(transformedData(serverId, server, "PCPU"), cpuUsageMetaData)
                   .build()
             }),
             new SceneFlexItem({
               minWidth: 300, 
               minHeight: 300,
-              body: getCpuTimeseriesBars(transformedData(serverId, "HighCpuTime"), highCpuTimeMetaData)
+              body: getCpuTimeseriesBars(transformedData(serverId, server, "HighCpuTime"), highCpuTimeMetaData)
                     .build()
                   
             }),
@@ -63,13 +65,13 @@ export const getCpuScene = (serverId: VariableValueSingle) => {
               new SceneFlexItem({
                 minWidth: 300, 
                 minHeight: 300,
-                body: getCpuTimeseriesBars(transformedData(serverId, "ProcessCount"), processCountMetaData)
+                body: getCpuTimeseriesBars(transformedData(serverId, server, "ProcessCount"), processCountMetaData)
                       .build()
               }),
               new SceneFlexItem({
                 minWidth: 300, 
                 minHeight: 300,
-                body: getCpuTimeseriesBars(transformedData(serverId, "IOSleeping"), ioSleepingMetaData)
+                body: getCpuTimeseriesBars(transformedData(serverId, server, "IOSleeping"), ioSleepingMetaData)
                       .build()
               }),
           
@@ -95,6 +97,8 @@ const getCpuTimeseries = (data: SceneDataTransformer, panelMetaData: PanelMetaDa
       displayMode: LegendDisplayMode.Table,
       placement: "right",
       calcs: ["mean"],
+      sortBy: "Mean",
+      sortDesc: true
     })
   .setOption("tooltip", {
     mode: TooltipDisplayMode.Single,
@@ -143,7 +147,7 @@ const getCpuTimeseriesBars = (data: SceneDataTransformer, panelMetaData: PanelMe
   
 }
 
-const cpuQuery = (serverId: VariableValueSingle, field: string) => new SceneQueryRunner({
+const cpuQuery = (serverId: VariableValueSingle, server: string, field: string) => new SceneQueryRunner({
   queries: 
   [{
       datasource: SQL_DATASOURCE_2,
@@ -172,7 +176,7 @@ const cpuQuery = (serverId: VariableValueSingle, field: string) => new SceneQuer
                                 $__timeFilter(TimeCreated) AND MachineId = ${serverId}
                         ) ur ON u.Id = ur.UserId
                     ) res 
-                WHERE Login IN ($userCpu)
+                WHERE Login IN ($userCpu${server})
                 GROUP BY time, Login
                 ORDER BY 
                     time
@@ -182,8 +186,8 @@ const cpuQuery = (serverId: VariableValueSingle, field: string) => new SceneQuer
 });
 
 
-const transformedData = (serverId: VariableValueSingle,  field: string) => new SceneDataTransformer({
-  $data: cpuQuery(serverId,field),
+const transformedData = (serverId: VariableValueSingle, server: string, field: string) => new SceneDataTransformer({
+  $data: cpuQuery(serverId, server, field),
   transformations: [
       {
       id: 'renameByRegex',
