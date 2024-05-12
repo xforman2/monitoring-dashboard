@@ -109,7 +109,7 @@ const diskQuery = (serverId: VariableValueSingle, server: string) => new SceneQu
       datasource: SQL_DATASOURCE_2,
       refId: 'A',
       format: "time_series",
-      rawSql: `SELECT TimeCreated as time, Login, (DiskSpaceUsed / DiskLimit) * 100 As DiskSpaceUsed
+      rawSql: `SELECT TimeCreated as time, Login, (DiskSpaceUsed / DiskCapacity) * 100 as DiskSpaceUsed
       FROM UserDiskRecord dr
       JOIN User u ON UserId = u.Id
       JOIN Machine m ON MachineId = m.Id
@@ -125,7 +125,7 @@ const filesQuery = (serverId: VariableValueSingle, server: string) => new SceneQ
         datasource: SQL_DATASOURCE_2,
         refId: 'A',
         format: "time_series",
-          rawSql: `SELECT TimeCreated as time, Login, (FilesUsed / FileLimit) * 100 As FilesUsed
+          rawSql: `SELECT TimeCreated as time, Login, (FilesUsed / INodeCapacity) * 100 as FilesUsed
           FROM UserDiskRecord dr
           JOIN User u ON UserId = u.Id
           JOIN Machine m ON MachineId = m.Id

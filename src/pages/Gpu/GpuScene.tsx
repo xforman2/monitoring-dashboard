@@ -118,7 +118,7 @@ const gpuMemoryUsage = (serverId: VariableValueSingle, server: string, gpu: Vari
                                 (MemoryUsage / AvailableMemoryMB) * 100 as MemoryUsage,
                                 RecordTimeCreated
                             FROM   
-                              GpuReceipt gr
+                              GpuRecord gr
                             JOIN Gpu g ON g.ID = gr.GpuID
                             WHERE 
                                 $__timeFilter(RecordTimeCreated) AND MachineId = ${serverId} AND GpuId = ${gpu}
