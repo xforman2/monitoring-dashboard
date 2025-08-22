@@ -36,7 +36,7 @@ jobs:
         run: |
           mkdir release
           cp -r dist release/
-          cp docker-compose.yml release/
+          cp docker-compose.yaml release/
           cp .env.example release/
           cp -r provisioning release/
           cp Home.json release/
