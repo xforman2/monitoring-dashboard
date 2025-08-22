@@ -1,20 +1,52 @@
-name: Release
+name: Build and Release Grafana Plugin
 
 on:
+  workflow_dispatch:
   push:
-    tags:
-      - 'v*' # Run workflow on version tags, e.g. v1.0.0.
+    branches:
+      - main
 
 jobs:
   release:
     runs-on: ubuntu-latest
+
+    env:
+      GRAFANA_SERVER: ${{ secrets.GRAFANA_SERVER }}
+      GRAFANA_TOKEN: ${{ secrets.GRAFANA_TOKEN }}
+
     steps:
-      - uses: actions/checkout@v3
-      - uses: grafana/plugin-actions/build-plugin@release
-        # uncomment to enable plugin sign in
+      - name: Checkout repo
+        uses: actions/checkout@v3
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v3
         with:
-        # see https://grafana.com/developers/plugin-tools/publish-a-plugin/sign-a-plugin#generate-an-access-policy-token to generate it
-        # save the value in your repository secrets
-          policy_token: ${{ secrets.GRAFANA_API_KEY }}
-        #usage of GRAFANA_API_KEY is deprecated prefer policy_token
-        #grafana_token: $
+          node-version: 18
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Build plugin
+        run: npm run build
+
+      - name: Sign plugin
+        run: npx @grafana/sign-plugin --rootUrls ${GRAFANA_SERVER} --token ${GRAFANA_TOKEN}
+
+      - name: Package release files
+        run: |
+          mkdir release
+          cp -r dist release/
+          cp docker-compose.yml release/
+          cp .env.example release/
+          cp -r provisioning release/
+          cp Home.json release/
+          tar -czf grafana-plugin-release.tar.gz -C release .
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: grafana-plugin-release.tar.gz
+          tag_name: grafana-plugin-release
+          name: Grafana Plugin Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
