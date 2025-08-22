@@ -1,16 +1,26 @@
-version: '3.0'
-
+version: '3.8'
 services:
   grafana:
-    container_name: 'xforman2-servermonitoring-scenesapp'
-    platform: 'linux/amd64'
-    build:
-      context: ./.config
-      args:
-        grafana_image: ${GRAFANA_IMAGE:-grafana-enterprise}
-        grafana_version: ${GRAFANA_VERSION:-10.3.1}
+
+    image: grafana/grafana-enterprise:10.3.1
+    container_name: grafana
     ports:
-      - 3000:3000/tcp
+      - '3000:3000'
+    environment:
+      - GF_SERVER_ROOT_URL=http://alfa.fi.muni.cz:3000
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Viewer
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_BASIC_ENABLED=false
+      - GF_AUTH_ORG_NAME=xforman2
+      - GF_DASHBOARDS_DEFAULT_HOME_DASHBOARD_PATH=/tmp/Home.json
+      - GF_DB_PASS=${DB_PASS}
+      - GF_UNIFIED_ALERTING_ENABLED=false
+      - GF_ALERTING_ENABLED=false
+      - GF_LOG_LEVEL=debug
     volumes:
-      - ./dist:/var/lib/grafana/plugins/xforman2-servermonitoring-scenesapp
-      - ./provisioning:/etc/grafana/provisioning
+      - ./monitoring-plugin/dist/:/var/lib/grafana/plugins/xforman2-servermonitoring-scenesapp
+      - ./monitoring-plugin/provisioning:/etc/grafana/provisioning
+      - grafana-storage:/var/lib/grafana
+      - ./Home.json:/tmp/Home.json
+volumes:
+  grafana-storage: {}

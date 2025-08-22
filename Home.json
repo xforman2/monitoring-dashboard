@@ -1,0 +1,67 @@
+{
+  "annotations": {
+    "list": [
+      {
+        "builtIn": 1,
+        "datasource": {
+          "type": "grafana",
+          "uid": "-- Grafana --"
+        },
+        "enable": false,
+        "hide": true,
+        "iconColor": "rgba(0, 211, 255, 1)",
+        "name": "Annotations & Alerts",
+        "type": "dashboard"
+      }
+    ]
+  },
+  "description": "hello",
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": 1,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "datasource",
+        "uid": "-- Dashboard --"
+      },
+      "gridPos": {
+        "h": 24,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "<div style=\"display: flex; justify-content: center; align-items: center; height: 100%;\">\n    <div style=\"text-align: center;\">\n        <h1 style=\"font-size: 3rem; margin-bottom: 1rem;\">Welcome to the Grafana Instance!</h1>\n        <p style=\"font-size: 1.5rem; margin-bottom: 2rem;\">Explore our Server Monitoring App for detailed server metrics and health status.</p>\n        <a href=\"http://alfa.fi.muni.cz:3000/a/xforman2-servermonitoring-app/home\" style=\"display: inline-block; padding: 1rem 1rem; font-size: 1.5rem; text-decoration: none; background-color: #007bff; color: #fff; border-radius: 0.5rem;\">Go to Server Monitoring App</a>\n    </div>\n</div>\n",
+        "mode": "html"
+      },
+      "pluginVersion": "10.3.1",
+      "type": "text"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 39,
+  "tags": [],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "",
+  "title": "Home",
+  "uid": "c2ed61a1-e0ab-4e40-b9a1-6d16a6340a72",
+  "version": 4,
+  "weekStart": ""
+}
