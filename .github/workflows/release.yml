@@ -12,7 +12,7 @@ jobs:
 
     env:
       GRAFANA_SERVER: ${{ secrets.GRAFANA_SERVER }}
-      GRAFANA_TOKEN: ${{ secrets.GRAFANA_TOKEN }}
+      GRAFANA_ACCESS_POLICY_TOKEN: ${{ secrets.GRAFANA_TOKEN }}
 
     steps:
       - name: Checkout repo
@@ -30,7 +30,7 @@ jobs:
         run: npm run build
 
       - name: Sign plugin
-        run: npx @grafana/sign-plugin --rootUrls ${GRAFANA_SERVER} --token ${GRAFANA_TOKEN}
+        run: npx @grafana/sign-plugin --rootUrls ${GRAFANA_SERVER}
 
       - name: Package release files
         run: |
