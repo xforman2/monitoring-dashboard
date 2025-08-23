@@ -34,12 +34,12 @@ jobs:
 
       - name: Package release files
         run: |
-          mkdir release
-          cp -r dist release/
+          mkdir -p release/monitoring-plugin
+          cp -r dist release/monitoring-plugin/dist
+          cp -r provisioning release/monitoring-plugin/provisioning
+          cp Home.json release/Home.json
           cp docker-compose.yaml release/
           cp .env.example release/
-          cp -r provisioning release/
-          cp Home.json release/
           tar -czf grafana-plugin-release.tar.gz -C release .
 
       - name: Create GitHub Release
