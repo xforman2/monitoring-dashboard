@@ -41,7 +41,7 @@
           "showLineNumbers": false,
           "showMiniMap": false
         },
-        "content": "<div style=\"display: flex; justify-content: center; align-items: center; height: 100%;\">\n    <div style=\"text-align: center;\">\n        <h1 style=\"font-size: 3rem; margin-bottom: 1rem;\">Welcome to the Grafana Instance!</h1>\n        <p style=\"font-size: 1.5rem; margin-bottom: 2rem;\">Explore our Server Monitoring App for detailed server metrics and health status.</p>\n        <a href=\"http://alfa.fi.muni.cz:3000/a/xforman2-servermonitoring-app/home\" style=\"display: inline-block; padding: 1rem 1rem; font-size: 1.5rem; text-decoration: none; background-color: #007bff; color: #fff; border-radius: 0.5rem;\">Go to Server Monitoring App</a>\n    </div>\n</div>\n",
+        "content": "<div style=\"display: flex; justify-content: center; align-items: center; height: 100%;\">\n    <div style=\"text-align: center;\">\n        <h1 style=\"font-size: 3rem; margin-bottom: 1rem;\">Welcome to the Grafana Instance!</h1>\n        <p style=\"font-size: 1.5rem; margin-bottom: 2rem;\">Explore our Server Monitoring App for detailed server metrics and health status.</p>\n        <a href=\"http://__GRAFANA_SERVER__:3000/a/xforman2-servermonitoring-app/home\" style=\"display: inline-block; padding: 1rem 1rem; font-size: 1.5rem; text-decoration: none; background-color: #007bff; color: #fff; border-radius: 0.5rem;\">Go to Server Monitoring App</a>\n    </div>\n</div>\n",
         "mode": "html"
       },
       "pluginVersion": "10.3.1",

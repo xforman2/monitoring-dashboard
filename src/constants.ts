@@ -22,6 +22,6 @@ export const SQL_DATASOURCE_1 = {
 }
 
 export const SQL_DATASOURCE_2 = {
-  uid: 'server-monitoring-alfa',
+  uid: 'server-monitoring',
   type: 'mysql'
 }

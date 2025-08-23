@@ -29,8 +29,12 @@ jobs:
       - name: Build plugin
         run: npm run build
 
+      - name: Update Home.json with dynamic server
+        run: |
+          sed -i "s|__GRAFANA_SERVER__|${GRAFANA_SERVER}|g" Home.json
+
       - name: Sign plugin
-        run: npx @grafana/sign-plugin --rootUrls ${GRAFANA_SERVER}
+        run: npx @grafana/sign-plugin --rootUrls http://${GRAFANA_SERVER}:3000
 
       - name: Package release files
         run: |
