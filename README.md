@@ -25,7 +25,8 @@ Follow these steps to release and deploy the Grafana plugin on a target server.
 A GitHub Action workflow (`Build and Release Grafana Plugin`) is already configured.  
 It automatically:
 - Builds the plugin (`npm run build`).
-- Signs the plugin with Grafana’s signing tool. The steps to do this are explained here `https://grafana.com/developers/plugin-tools/publish-a-plugin/sign-a-plugin`
+- Signs the plugin with Grafana’s signing tool. The steps to do this are explained here:  
+  [Sign a Plugin](https://grafana.com/developers/plugin-tools/publish-a-plugin/sign-a-plugin)
 - Packages everything into a single archive:  
   **`grafana-plugin-release.tar.gz`**
 - Publishes it as a GitHub Release.
@@ -37,7 +38,7 @@ You can also trigger it manually from the **Actions** tab.
 On the target server, download the latest release:
 
 ```bash
-wget https://github.com/<your-org>/<your-repo>/releases/latest/download/grafana-plugin-release.tar.gz
+wget https://github.com/xforman2/monitoring-dashboard/releases/latest/download/grafana-plugin-release.tar.gz
 ```
 
 ### 3. Extract Files
@@ -72,7 +73,7 @@ Fill in values such as:
 
 ```env
 # The hostname or IP of the server where Grafana will be accessible
-SERVER_NAME=alfa.fi.muni.cz 
+SERVER_NAME=your.server.hostname
 
 # Database hostname or IP (e.g., localhost, db.example.com)
 DB_HOST=...
