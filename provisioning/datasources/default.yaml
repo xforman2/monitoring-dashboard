@@ -5,7 +5,7 @@ datasources:
     isDefault: false
     type: testdata
 
-  - name: server-monitoring-alfa
+  - name: server-monitoring
     type: mysql
     url: ${DB_HOST}:${DB_PORT}
     user: ${DB_USER}
